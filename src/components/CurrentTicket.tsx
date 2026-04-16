@@ -1,5 +1,3 @@
-import type { Ticket } from "../types";
-
 type Props = {
     id: string;
     clientName: string;
@@ -19,7 +17,7 @@ export default function CurrentTicket({
 }: Props) {
     return (
         <div
-            className="relative mb-6 flex h-40 flex-col items-center justify-center border border-blue-200 -bg-linear-210 from-emerald-700 to-green-300 text-white shadow-lg animate-fade-in animate-pulse-once rounded-2xl bg-blue-50 p-6">
+            className="relative mb-6 flex h-40 flex-col items-center justify-center rounded-2xl bg-gradient-to-r from-emerald-800 to-green-500 text-white shadow-lg p-6">
             <div className="text-center">
                 <h2 className="text-xl font-semibold uppercase tracking-wide opacity-100">
                     ✂️ Atendiendo ahora
@@ -28,7 +26,7 @@ export default function CurrentTicket({
                     {clientName}
                 </strong>
                 <span className="text-sm font-semibold opacity-90">
-                    {serviceName}
+                    {serviceName || "Servicio"}
                 </span>
             </div>
 
