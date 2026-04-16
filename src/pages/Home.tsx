@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { subscribeToTickets, addTicket, startService, finishService, markNoShow } from "../services/ticketService";
 import { subscribeToServices } from "../services/servicesService";
 import type { Ticket, Service } from "../types";
+import Swal from "sweetalert2";
+import CurrentTicket from "../components/CurrentTicket";
 
 export default function Home() {
     const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -10,6 +12,8 @@ export default function Home() {
 
     const [services, setServices] = useState<Service[]>([]);
     const [serviceId, setServiceId] = useState("");
+
+    const [loadingId, setLoadingId] = useState<string | null>(null);
 
     const current = tickets.find(t => t.status === "in_progress");
     const hasActiveService = Boolean(current);
@@ -26,12 +30,23 @@ export default function Home() {
         return () => unsub();
     }, []);
 
-    const servicesMap = useMemo(() => {
-        return services.reduce<Record<string, string>>((acc, s) => {
-            acc[s.id] = s.name;
-            return acc;
-        }, {});
-    }, [services]);
+    const servicesMap = useMemo(
+        () =>
+            Object.fromEntries(
+                services.map(s => [s.id, s.name])
+            ),
+        [services]
+    );
+
+    const capitalizeWords = (text: string) => {
+        if (!text) return "";
+
+        return text
+            .toLowerCase()
+            .split(" ")
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(" ");
+    };
 
     // AGREGAR NUEVO TURNO
     const handleReserve = async (e: React.FormEvent) => {
@@ -48,43 +63,78 @@ export default function Home() {
 
     // INICIAR ATENCIÓN DE UN TURNO
     const startServiceHandler = async (ticketId: string) => {
-        await startService(ticketId);
+        try {
+            setLoadingId(ticketId);
+            await startService(ticketId);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoadingId(null);
+        }
+    };
+
+    // CLIENTE NO LLEGÓ
+    const handleNoShow = async (ticketId: string) => {
+        const result = await Swal.fire({
+            title: "¿El cliente no llegó?",
+            text: "Se marcará como cancelado y se llamará el siguiente turno",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#d33",
+            cancelButtonColor: "#6b7280",
+            confirmButtonText: "Sí, cancelar",
+            cancelButtonText: "No"
+        });
+
+        if (result.isConfirmed) {
+            try {
+                setLoadingId(ticketId);
+                await markNoShow(ticketId);
+
+                Swal.fire({
+                    title: "Cancelado",
+                    text: "El turno fue marcado como no presentado",
+                    icon: "success",
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+
+            } catch (error) {
+                Swal.fire({
+                    title: "Error",
+                    text: "No se pudo actualizar el turno",
+                    icon: "error"
+                });
+            } finally {
+                setLoadingId(null);
+            }
+
+        }
+    };
+
+    //FINALIZAR ATENCIÓN DE UN TURNO
+    const handleFinish = async (ticketId: string) => {
+        try {
+            setLoadingId(ticketId);
+            await finishService(ticketId);
+        } finally {
+            setLoadingId(null);
+        }
     };
 
     return (
         <div className="min-h-screen bg-gray-100 px-4 py-6">
             <div className="mx-auto w-full max-w-4xl rounded-2xl bg-white p-6 shadow-lg">
                 {current && (
-                    <div
-                        key={current.id}
-                        className="relative mb-6 flex h-40 flex-col items-center justify-center border border-blue-200 -bg-linear-210 from-emerald-700 to-green-300 text-white shadow-lg animate-fade-in animate-pulse-once rounded-2xl bg-blue-50 p-6">
-                        <div className="text-center">
-                            <h2 className="text-xl font-semibold uppercase tracking-wide opacity-100">✂️ Atendiendo ahora</h2>
-                            <strong className="mt-2 block text-2xl font-bold">{current.client_name}</strong>
-                            <span className="text-sm font-semibold opacity-90">
-                                {servicesMap[current.service_id]}
-                            </span>
-                        </div>
-                        <div className="absolute bottom-1 right-1 flex flex-col items-end gap-1">
-                            <button
-                                onClick={() => finishService(current.id)}
-                                className="mt-4 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 transition cursor-pointer"
-                            >
-                                Finalizar
-                            </button>
-                            <a
-                                href="#"
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    markNoShow(current.id);
-                                }}
-                                className="text-xs font-stretch-50% text-black underline-offset-4 hover:underline transition-all cursor-pointer"
-                            >
-                                No llegó / Cancelar
-                            </a>
-                        </div>
-                    </div>
-                )}
+                <CurrentTicket
+                    id={current.id}
+                    clientName={capitalizeWords(current.client_name)}
+                    serviceName={servicesMap[current.service_id]}
+                    onFinish={handleFinish}
+                    onNoShow={handleNoShow}
+                    loading={loadingId === current.id}
+                />
+            )}
 
                 <h1 className="text-3xl font-bold mb-4">💈 Turnos de Hoy</h1>
                 <div className="overflow-hidden rounded-xl border border-gray-200 shadow-sm mt-5">
@@ -113,8 +163,8 @@ export default function Home() {
                                                 key={t.id}
                                                 className="duration-300 hover:bg-gray-50 transition-colors">
                                                 <td className="w-10 text-center text-sm text-gray-700">{i + 1}</td>
-                                                <td className="px-4 py-3 font-medium text-gray-800 truncate">{t.client_name}</td>
-                                                <td className="px-4 py-3 text-gray-600 hidden sm:table-cell">{services.find(s => s.id === t.service_id)?.name || "Servicio no encontrado"}</td>
+                                                <td className="px-4 py-3 font-medium text-gray-800 truncate">{capitalizeWords(t.client_name)}</td>
+                                                <td className="px-4 py-3 text-gray-600 hidden sm:table-cell">{servicesMap[t.service_id] || "Servicio no encontrado"}</td>
                                                 <td className="px-4 py-3 text-gray-600 sm:table-cell">
                                                     {t.status === "in_progress" ? (
                                                         <span
@@ -134,23 +184,28 @@ export default function Home() {
                                                 <td className="px-4 py-3 text-center">
                                                     <div className="flex justify-center items-center">
                                                         <button
-                                                            disabled={hasActiveService && t.status !== "in_progress"}
-                                                            onClick={() => {
-                                                                if (hasActiveService) return;
-                                                                startServiceHandler(t.id);
-                                                            }}
+                                                            disabled={
+                                                                loadingId === t.id ||
+                                                                (hasActiveService && t.status !== "in_progress")
+                                                    }
+                                                            onClick={() => startServiceHandler(t.id)}
                                                             className={`
                                                         rounded-lg px-4 py-2 text-sm font-semibold transition
-                                                        ${t.status === "in_progress"
-                                                                    ? "bg-green-600 cursor-default"
-                                                                    : hasActiveService
-                                                                        ? "bg-gray-300 cursor-not-allowed"
-                                                                        : "bg-blue-600 hover:bg-blue-700 active:scale-95"
+                                                        ${loadingId === t.id
+                                                                    ? "bg-gray-400 cursor-wait"
+                                                                    : t.status === "in_progress"
+                                                                        ? "bg-green-600 cursor-default"
+                                                                        : hasActiveService
+                                                                            ? "bg-gray-300 cursor-not-allowed"
+                                                                            : "bg-blue-600 hover:bg-blue-700 active:scale-95"
                                                                 }
-                                                        disabled:opacity-60 disabled:cursor-not-allowed
                                                 `}
                                                         >
-                                                            {t.status === "in_progress" ? "En Atención" : "Iniciar Atención"}
+                                                            {loadingId === t.id
+                                                            ? "Cargando..."
+                                                            : t.status === "in_progress"
+                                                                ? "En Atención"
+                                                                : "Iniciar Atención"}
                                                         </button>
 
                                                     </div>
