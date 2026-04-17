@@ -1,12 +1,12 @@
 import { useState } from "react";
 
-import CurrentTicket from "../components/CurrentTicket";
-import TicketTable from "../components/TicketTable";
-import ReserveForm from "../components/ReserveForm";
+import CurrentTicket from "../features/tickets/components/CurrentTicket";
+import TicketTable from "../features/tickets/components/TicketTable";
+import ReserveForm from "../features/tickets/components/ReserveForm";
 
-import { useTickets } from "../hooks/useTickets";
+import { useTickets } from "../features/tickets/hooks/useTickets";
 
-import { capitalizeWords } from "../utils/format";
+import { capitalizeWords } from "../shared/utils/format";
 import Swal from "sweetalert2";
 
 export default function Home() {
@@ -35,8 +35,35 @@ export default function Home() {
                         id={current.id}
                         clientName={capitalizeWords(current.client_name)}
                         serviceName={servicesMap[current.service_id]}
-                        onFinish={handleFinish}
-                        onNoShow={handleNoShow}
+                        onFinish={async (id) => {
+                            const res = await handleFinish(id);
+
+                            if (!res?.ok) {
+                                Swal.fire({
+                                    icon: "error",
+                                    text: res?.message || "Error al finalizar"
+                                });
+                            }
+                        }}
+                        onNoShow={async (id) => {
+                            const res = await handleNoShow(id);
+
+                            if (!res) return; // cancelado por usuario
+
+                            if (!res?.ok) {
+                                Swal.fire({
+                                    icon: "error",
+                                    text: res?.message || "Error al cancelar"
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: "success",
+                                    title: "Turno cancelado",
+                                    timer: 1200,
+                                    showConfirmButton: false
+                                });
+                            }
+                        }}
                         loading={loadingId === current.id}
                     />
                 )}
@@ -53,7 +80,16 @@ export default function Home() {
                             <TicketTable
                                 tickets={tickets}
                                 servicesMap={servicesMap}
-                                onStart={startServiceHandler}
+                                onStart={async (id) => {
+                                    const res = await startServiceHandler(id);
+
+                                    if (!res?.ok) {
+                                        Swal.fire({
+                                            icon: "error",
+                                            text: res?.message || "Error al iniciar el servicio"
+                                        });
+                                    }
+                                }}
                                 hasActiveService={hasActiveService}
                                 loadingId={loadingId}
                             />
@@ -77,8 +113,8 @@ export default function Home() {
                             services={services}
                             onSubmit={async (e) => {
                                 e.preventDefault();
-                                const success = await handleReserve(clientName, serviceId);
-                                if (success) {
+                                const res = await handleReserve(clientName, serviceId);
+                                if (res.ok) {
                                     setClientName("");
                                     setServiceId("");
                                     setShowForm(false);
@@ -88,6 +124,11 @@ export default function Home() {
                                         title: "Turno reservado",
                                         timer: 1500,
                                         showConfirmButton: false
+                                    });
+                                }else {
+                                    Swal.fire({
+                                        icon: "warning",
+                                        text: res?.message 
                                     });
                                 }
                             }}
