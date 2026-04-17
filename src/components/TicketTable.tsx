@@ -1,13 +1,12 @@
-import type { Ticket } from "../types";
+import type { EnrichedTicket } from "../types";
 
 import { TICKET_STATUS } from "../constants/tickets";
 
-import { capitalizeWords } from "../utils/format";
 
 import { memo } from "react";
 
 type Props = {
-    tickets: Ticket[];
+    tickets: EnrichedTicket[];
     servicesMap: Record<string, string>;
     onStart: (id: string) => void;
     hasActiveService: boolean;
@@ -16,7 +15,6 @@ type Props = {
 
 function TicketTable({
     tickets,
-    servicesMap,
     onStart,
     hasActiveService,
     loadingId
@@ -35,7 +33,7 @@ function TicketTable({
                 </thead>
 
                 <tbody className="divide-y divide-gray-100">
-                    {tickets.map((t, i) => (
+                    {tickets.map((t , i) => (
                         <tr
                             key={t.id}
                             className="duration-300 hover:bg-gray-50 transition-colors">
@@ -43,10 +41,10 @@ function TicketTable({
                                 {i + 1}
                             </td>
                             <td className="px-4 py-3 font-medium text-gray-800 truncate">
-                                {capitalizeWords(t.client_name)}
+                                {t.clientNameFormatted}
                             </td>
                             <td className="px-4 py-3 text-gray-600 hidden sm:table-cell">
-                                {servicesMap[t.service_id] ?? "--"}</td>
+                                {t.serviceName ?? "--"}</td>
                             <td className="px-4 py-3 text-gray-600 sm:table-cell">
                                 {t.status === TICKET_STATUS.IN_PROGRESS ? (
                                     <span

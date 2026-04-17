@@ -13,6 +13,11 @@ export interface Ticket {
     status: TicketStatus;
 }
 
+export interface EnrichedTicket extends Ticket {
+    clientNameFormatted: string;
+    serviceName: string;
+}
+
 export interface Service {
     id: string;
     name: string;

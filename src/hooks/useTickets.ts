@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react"; 
 
+import { capitalizeWords } from "../utils/format";
+
 import { TICKET_STATUS } from "../constants/tickets";
 
 import {
@@ -17,12 +19,25 @@ export function useTickets() {
     const [tickets, setTickets] = useState<Ticket[]>([]);
     const [services, setServices] = useState<Service[]>([]);
     const [loadingId, setLoadingId] = useState<string | null>(null);
+    
+    const servicesMap = useMemo(
+        () => Object.fromEntries(services.map(s => [s.id, s.name])),
+        [services]
+    );
+
+    const enrichedTickets = useMemo(() => {
+    return tickets.map(t => ({
+        ...t,
+        clientNameFormatted: capitalizeWords(t.client_name),
+        serviceName: servicesMap[t.service_id] ?? "—"
+    }));
+}, [tickets, servicesMap]);
 
     // Subscripciones
     useEffect(() => {
         const unsubTickets = subscribeToTickets(setTickets);
         const unsubServices = subscribeToServices(setServices);
-
+        
         return () => {
             unsubTickets();
             unsubServices();
@@ -37,10 +52,6 @@ export function useTickets() {
 
     const hasActiveService = Boolean(current);
 
-    const servicesMap = useMemo(
-        () => Object.fromEntries(services.map(s => [s.id, s.name])),
-        [services]
-    );
 
     // Acciones
     const handleReserve = async (clientName: string, serviceId: string) => {
@@ -102,7 +113,7 @@ export function useTickets() {
     };
 
     return {
-        tickets,
+        tickets: enrichedTickets,
         services,
         current,
         hasActiveService,
