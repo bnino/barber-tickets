@@ -5,6 +5,7 @@ import type { Ticket, Service } from "../types";
 import Swal from "sweetalert2";
 import CurrentTicket from "../components/CurrentTicket";
 import TicketTable from "../components/TicketTable";
+import ReserveForm from "../components/ReserveForm";
 
 export default function Home() {
     const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -175,33 +176,14 @@ export default function Home() {
                     </button>
 
                     {showForm && (
-                        <form className="mt-5 flex flex-col gap-3" onSubmit={handleReserve}>
-                            <input
-                                className="p-3 rounded-md border border-gray-300 text-base focus:outline-none focus:border-black"
-                                placeholder="Tu nombre"
-                                value={clientName}
-                                onChange={(e) => setClientName(e.target.value)}
-                            />
-
-                            <select
-                                className="p-3 rounded-md border border-gray-300 text-base focus:outline-none focus:border-black"
-                                value={serviceId}
-                                onChange={(e) => {
-                                    setServiceId(e.target.value);
-                                }}
-                            >
-                                <option value="">Selecciona un servicio</option>
-                                {services.map((s) => (
-                                    <option key={s.id} value={s.id}>
-                                        {s.name} - ${s.price}
-                                    </option>
-                                ))}
-                            </select>
-
-                            <button className="mt-2.5 p-3 text-base font-bold bg-blue-500 text-white border-none rounded-md cursor-pointer transition-colors duration-150 ease-in-out hover:bg-blue-700" type="submit">
-                                Confirmar turno
-                            </button>
-                        </form>
+                        <ReserveForm
+                            clientName={clientName}
+                            setClientName={setClientName}
+                            serviceId={serviceId}
+                            setServiceId={setServiceId}
+                            services={services}
+                            onSubmit={handleReserve}
+                        />
                     )}
                 </div>
 

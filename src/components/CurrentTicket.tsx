@@ -17,7 +17,7 @@ export default function CurrentTicket({
 }: Props) {
     return (
         <div
-            className="relative mb-6 flex h-40 flex-col items-center justify-center rounded-2xl bg-gradient-to-r from-emerald-800 to-green-500 text-white shadow-lg p-6">
+            className="relative mb-6 flex h-40 flex-col items-center justify-center rounded-2xl bg-linear-to-r from-emerald-800 to-green-500 text-white shadow-lg p-6">
             <div className="text-center">
                 <h2 className="text-xl font-semibold uppercase tracking-wide opacity-100">
                     ✂️ Atendiendo ahora
