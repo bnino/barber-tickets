@@ -14,7 +14,6 @@ import {
 } from "../services/ticketService";
 import { subscribeToServices } from "../services/servicesService";
 import type { Ticket, Service } from "../types";
-import Swal from "sweetalert2";
 import { handleError } from "../../../shared/utils/errorHandler";
 
 export function useTickets() {
@@ -89,16 +88,6 @@ export function useTickets() {
     };
 
     const handleNoShow = async (ticketId: string): Promise<ApiResponse> => {
-        const result = await Swal.fire({
-            title: "¿El cliente no llegó?",
-            text: "Se marcará como cancelado y se llamará el siguiente turno",
-            icon: "warning",
-            showCancelButton: true,
-            confirmButtonText: "Sí"
-        });
-
-        if (!result.isConfirmed) return { ok: false, message: "Cancelado por el usuario" };;
-
         try {
             setLoadingId(ticketId);
             await markNoShow(ticketId);
