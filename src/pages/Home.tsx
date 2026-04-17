@@ -16,7 +16,7 @@ export default function Home() {
 
     const [showFinishModal, setShowFinishModal] = useState(false);
     const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
-    const [price, setPrice] = useState("");
+    const [price, setPrice] = useState<number | null>(null);
     const [paymentMethod, setPaymentMethod] = useState<"cash" | "nequi">("cash");
 
     const {
@@ -39,15 +39,16 @@ export default function Home() {
                     <CurrentTicket
                         id={current.id}
                         clientName={current.clientNameFormatted}
-                        serviceName={servicesMap[current.service_id]?.name || "Servicio"}
+                        serviceName={current.serviceName}
 
                         onFinish={(id) => {
 
                             const ticket = tickets.find(t => t.id === id);
-                            const service = ticket ? servicesMap[ticket.service_id] : null;
+                            const service = services.find(s => s.id === ticket?.service_id);
 
+                            setPaymentMethod("cash");
                             setSelectedTicketId(id);
-                            setPrice(service ? String(service.price) : "");
+                            setPrice(service ? service.price : null);
                             setShowFinishModal(true);
                         }}
 
@@ -137,8 +138,13 @@ export default function Home() {
                 onConfirm={async () => {
                     if (!selectedTicketId) return;
 
+                    if (!price || price <= 0) {
+                        alert.warning("Ingresa un precio válido");
+                        return;
+                    }
+
                     const res = await handleFinish(selectedTicketId, {
-                        price: Number(price),
+                        price: price,
                         payment_method: paymentMethod
                     });
 
@@ -150,7 +156,7 @@ export default function Home() {
                     alert.success("Servicio finalizado");
 
                     setShowFinishModal(false);
-                    setPrice("");
+                    setPrice(null);
                     setPaymentMethod("cash");
                     setSelectedTicketId(null);
                 }}
