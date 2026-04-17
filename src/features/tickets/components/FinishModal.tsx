@@ -1,9 +1,11 @@
 import { memo } from "react";
 
+import { formatCOP } from "../../../shared/utils/currency";
+
 type Props = {
     isOpen: boolean;
-    price: string;
-    setPrice: (value: string) => void;
+    price: number | null;
+    setPrice: (value: number | null) => void;
     paymentMethod: "cash" | "nequi";
     setPaymentMethod: (value: "cash" | "nequi") => void;
     onClose: () => void;
@@ -34,10 +36,13 @@ function FinishModal({
                 <div className="flex items-center border rounded mb-3 px-2">
                     <span className="text-gray-500 font-semibold">$</span>
                     <input
-                        type="number"
+                        type="text"
                         placeholder="0"
-                        value={price}
-                        onChange={(e) => setPrice(e.target.value)}
+                        value={price !== null ? formatCOP(price) : ""}
+                        onChange={(e) => {
+                            const raw = e.target.value.replace(/\D/g, ""); 
+                            setPrice(raw ? Number(raw) : null);
+                        }}
                         className="w-full p-2 outline-none"
                     />
                 </div>
