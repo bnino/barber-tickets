@@ -5,6 +5,7 @@ import TicketTable from "../features/tickets/components/TicketTable";
 import ReserveForm from "../features/tickets/components/ReserveForm";
 
 import { useTickets } from "../features/tickets/hooks/useTickets";
+import { useAlert } from "../features/tickets/hooks/useAlert";
 
 import { capitalizeWords } from "../shared/utils/format";
 import Swal from "sweetalert2";
@@ -13,6 +14,7 @@ export default function Home() {
     const [showForm, setShowForm] = useState(false);
     const [clientName, setClientName] = useState("");
     const [serviceId, setServiceId] = useState("");
+    const alert = useAlert();
 
     const {
         tickets,
@@ -39,29 +41,21 @@ export default function Home() {
                             const res = await handleFinish(id);
 
                             if (!res?.ok) {
-                                Swal.fire({
-                                    icon: "error",
-                                    text: res?.message || "Error al finalizar"
-                                });
+                                alert.error(res?.message || "Error al finalizar");
                             }
                         }}
                         onNoShow={async (id) => {
+                            const confirm = await alert.confirm(
+                                "Se marcará como cancelado y se llamará el siguiente turno"
+                            );
+
+                            if (!confirm.isConfirmed) return;
+
                             const res = await handleNoShow(id);
-
-                            if (!res) return; // cancelado por usuario
-
-                            if (!res?.ok) {
-                                Swal.fire({
-                                    icon: "error",
-                                    text: res?.message || "Error al cancelar"
-                                });
+                            if (!res.ok) {
+                                alert.error(res?.message || "Error al cancelar");
                             } else {
-                                Swal.fire({
-                                    icon: "success",
-                                    title: "Turno cancelado",
-                                    timer: 1200,
-                                    showConfirmButton: false
-                                });
+                                alert.success("Turno cancelado");
                             }
                         }}
                         loading={loadingId === current.id}
@@ -84,10 +78,7 @@ export default function Home() {
                                     const res = await startServiceHandler(id);
 
                                     if (!res?.ok) {
-                                        Swal.fire({
-                                            icon: "error",
-                                            text: res?.message || "Error al iniciar el servicio"
-                                        });
+                                        alert.error(res?.message || "Error al iniciar el servicio");
                                     }
                                 }}
                                 hasActiveService={hasActiveService}
@@ -119,17 +110,9 @@ export default function Home() {
                                     setServiceId("");
                                     setShowForm(false);
 
-                                    Swal.fire({
-                                        icon: "success",
-                                        title: "Turno reservado",
-                                        timer: 1500,
-                                        showConfirmButton: false
-                                    });
-                                }else {
-                                    Swal.fire({
-                                        icon: "warning",
-                                        text: res?.message 
-                                    });
+                                    alert.success("Turno reservado");
+                                } else {
+                                    alert.warning(res?.message);
                                 }
                             }}
                         />
