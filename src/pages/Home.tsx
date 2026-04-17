@@ -3,18 +3,21 @@ import { useState } from "react";
 import CurrentTicket from "../features/tickets/components/CurrentTicket";
 import TicketTable from "../features/tickets/components/TicketTable";
 import ReserveForm from "../features/tickets/components/ReserveForm";
+import FinishModal from "../features/tickets/components/FinishModal";
 
 import { useTickets } from "../features/tickets/hooks/useTickets";
 import { useAlert } from "../features/tickets/hooks/useAlert";
-
-import { capitalizeWords } from "../shared/utils/format";
-import Swal from "sweetalert2";
 
 export default function Home() {
     const [showForm, setShowForm] = useState(false);
     const [clientName, setClientName] = useState("");
     const [serviceId, setServiceId] = useState("");
     const alert = useAlert();
+
+    const [showFinishModal, setShowFinishModal] = useState(false);
+    const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
+    const [price, setPrice] = useState("");
+    const [paymentMethod, setPaymentMethod] = useState<"cash" | "nequi">("cash");
 
     const {
         tickets,
@@ -35,15 +38,19 @@ export default function Home() {
                 {current && (
                     <CurrentTicket
                         id={current.id}
-                        clientName={capitalizeWords(current.client_name)}
-                        serviceName={servicesMap[current.service_id]}
-                        onFinish={async (id) => {
-                            const res = await handleFinish(id);
+                        clientName={current.clientNameFormatted}
+                        serviceName={servicesMap[current.service_id]?.name || "Servicio"}
 
-                            if (!res?.ok) {
-                                alert.error(res?.message || "Error al finalizar");
-                            }
+                        onFinish={(id) => {
+
+                            const ticket = tickets.find(t => t.id === id);
+                            const service = ticket ? servicesMap[ticket.service_id] : null;
+
+                            setSelectedTicketId(id);
+                            setPrice(service ? String(service.price) : "");
+                            setShowFinishModal(true);
                         }}
+
                         onNoShow={async (id) => {
                             const confirm = await alert.confirm(
                                 "Se marcará como cancelado y se llamará el siguiente turno"
@@ -120,6 +127,34 @@ export default function Home() {
                 </div>
 
             </div>
+            <FinishModal
+                isOpen={showFinishModal}
+                price={price}
+                setPrice={setPrice}
+                paymentMethod={paymentMethod}
+                setPaymentMethod={setPaymentMethod}
+                onClose={() => setShowFinishModal(false)}
+                onConfirm={async () => {
+                    if (!selectedTicketId) return;
+
+                    const res = await handleFinish(selectedTicketId, {
+                        price: Number(price),
+                        payment_method: paymentMethod
+                    });
+
+                    if (!res.ok) {
+                        alert.error(res.message);
+                        return;
+                    }
+
+                    alert.success("Servicio finalizado");
+
+                    setShowFinishModal(false);
+                    setPrice("");
+                    setPaymentMethod("cash");
+                    setSelectedTicketId(null);
+                }}
+            />
         </div>
 
     );

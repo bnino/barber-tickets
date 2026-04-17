@@ -67,10 +67,18 @@ export const startService = async (ticketId: string) => {
     });
 };
 
-export const finishService = async (ticketId: string) => {
+export const finishService = async (
+    ticketId: string, 
+    data: {
+        price: number,
+        payment_method: "cash" | "nequi";
+    }
+) => {
     await updateDoc(doc(db, "tickets", ticketId), {
         status: "done",
-        time_end: serverTimestamp(),
+        price: data.price,
+        payment_method: data.payment_method,
+        finished_at: serverTimestamp(),
     });
 
     await startNextWaiting();
