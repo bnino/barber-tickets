@@ -11,6 +11,10 @@ export interface Ticket {
     client_name: string;
     service_id: string;
     status: TicketStatus;
+    date?: any;
+    price?: number;
+    payment_method?: "cash" | "nequi";
+    finished_at?: any;
 }
 
 export interface EnrichedTicket extends Ticket {

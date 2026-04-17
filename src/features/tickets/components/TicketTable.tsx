@@ -7,7 +7,7 @@ import { memo } from "react";
 
 type Props = {
     tickets: EnrichedTicket[];
-    servicesMap: Record<string, string>;
+    servicesMap: Record<string, { name: string; price: number }>;
     onStart: (id: string) => void;
     hasActiveService: boolean;
     loadingId: string | null;

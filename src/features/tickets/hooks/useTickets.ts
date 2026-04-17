@@ -21,8 +21,10 @@ export function useTickets() {
     const [services, setServices] = useState<Service[]>([]);
     const [loadingId, setLoadingId] = useState<string | null>(null);
 
-    const servicesMap = useMemo(
-        () => Object.fromEntries(services.map(s => [s.id, s.name])),
+    const servicesMap = useMemo<Record<string, { name: string; price: number }>>(
+        () => Object.fromEntries(
+            services.map(s => [s.id, {name: s.name, price: s.price}])
+        ),
         [services]
     );
 
@@ -30,7 +32,7 @@ export function useTickets() {
         return tickets.map(t => ({
             ...t,
             clientNameFormatted: capitalizeWords(t.client_name),
-            serviceName: servicesMap[t.service_id] ?? "—"
+            serviceName: servicesMap[t.service_id]?.name ?? "—"
         }));
     }, [tickets, servicesMap]);
 
@@ -47,7 +49,7 @@ export function useTickets() {
 
     // Derivados
     const current = useMemo(
-        () => tickets.find(t => t.status === TICKET_STATUS.IN_PROGRESS),
+        () => enrichedTickets.find(t => t.status === TICKET_STATUS.IN_PROGRESS),
         [tickets]
     );
 
@@ -75,10 +77,13 @@ export function useTickets() {
         }
     };
 
-    const handleFinish = async (ticketId: string): Promise<ApiResponse> => {
+    const handleFinish = async (
+        ticketId: string,
+        data: { price: number; payment_method: "cash" | "nequi" }
+    ): Promise<ApiResponse> => {
         try {
             setLoadingId(ticketId);
-            await finishService(ticketId);
+            await finishService(ticketId, data);
             return { ok: true };
         } catch (error) {
             return handleError(error, "No se pudo finalizar");
