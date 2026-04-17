@@ -1,5 +1,8 @@
 import type { Ticket } from "../types";
+
 import { capitalizeWords } from "../utils/format";
+
+import { memo } from "react";
 
 type Props = {
     tickets: Ticket[];
@@ -9,7 +12,7 @@ type Props = {
     loadingId: string | null;
 };
 
-export default function TicketTable({
+function TicketTable({
     tickets,
     servicesMap,
     onStart,
@@ -41,7 +44,7 @@ export default function TicketTable({
                                 {capitalizeWords(t.client_name)}
                             </td>
                             <td className="px-4 py-3 text-gray-600 hidden sm:table-cell">
-                                {servicesMap[t.service_id] || "Servicio no encontrado"}</td>
+                                {servicesMap[t.service_id] ?? "--"}</td>
                             <td className="px-4 py-3 text-gray-600 sm:table-cell">
                                 {t.status === "in_progress" ? (
                                     <span
@@ -95,3 +98,5 @@ export default function TicketTable({
         </div>
     )
 }
+
+export default memo(TicketTable);

@@ -1,5 +1,7 @@
 import type { Service } from "../types";
 
+import { memo } from "react";
+
 type Props = {
     clientName: string;
     setClientName: (value: string) => void;
@@ -9,7 +11,7 @@ type Props = {
     onSubmit: (e: React.FormEvent) => void;
 };
 
-export default function ReserveForm({
+function ReserveForm({
     clientName,
     setClientName,
     serviceId,
@@ -47,3 +49,5 @@ export default function ReserveForm({
         </form>
     )
 }
+
+export default memo(ReserveForm);

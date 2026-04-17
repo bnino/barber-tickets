@@ -1,3 +1,5 @@
+import { memo } from "react";
+
 type Props = {
     id: string;
     clientName: string;
@@ -7,7 +9,7 @@ type Props = {
     loading: boolean;
 };
 
-export default function CurrentTicket({
+function CurrentTicket({
     id,
     clientName,
     serviceName,
@@ -50,3 +52,5 @@ export default function CurrentTicket({
         </div>
     )
 }
+
+export default memo(CurrentTicket);

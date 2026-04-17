@@ -41,7 +41,7 @@ export default function Home() {
                     />
                 )}
 
-                <h1 className="text-3xl font-bold mb-4">💈 Turnos de Hoy</h1>
+                <h1 className="text-3xl font-bold mb-4">💈 Turnos Reservados</h1>
                 <div className="overflow-hidden rounded-xl border border-gray-200 shadow-sm mt-5">
                     {tickets.length === 0 ?
                         (
