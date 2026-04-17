@@ -1,4 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react"; 
+
+import { TICKET_STATUS } from "../constants/tickets";
+
 import {
     subscribeToTickets,
     addTicket,
@@ -28,7 +31,7 @@ export function useTickets() {
 
     // Derivados
     const current = useMemo(
-        () => tickets.find(t => t.status === "in_progress"),
+        () => tickets.find(t => t.status === TICKET_STATUS.IN_PROGRESS),
         [tickets]
     );
 
