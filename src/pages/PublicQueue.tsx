@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { subscribeToTickets } from "../services/ticketService";
-import { subscribeToServices } from "../services/servicesService";
+import { subscribeToTickets } from "../features/tickets/services/ticketService";
+import { subscribeToServices } from "../features/tickets/services/servicesService";
 import { Timestamp } from "firebase/firestore";
-import type { Ticket, Service } from "../types";
+import type { Ticket, Service } from "../features/tickets/types";
 
 export default function PublicQueue() {
     const [tickets, setTickets] = useState<Ticket[]>([]);
