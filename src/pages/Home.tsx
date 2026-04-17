@@ -86,7 +86,7 @@ export default function Home() {
                                     Swal.fire({
                                         icon: "success",
                                         title: "Turno reservado",
-                                        timer: 1200,
+                                        timer: 1500,
                                         showConfirmButton: false
                                     });
                                 }

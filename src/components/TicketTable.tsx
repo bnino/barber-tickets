@@ -1,5 +1,7 @@
 import type { Ticket } from "../types";
 
+import { TICKET_STATUS } from "../constants/tickets";
+
 import { capitalizeWords } from "../utils/format";
 
 import { memo } from "react";
@@ -46,7 +48,7 @@ function TicketTable({
                             <td className="px-4 py-3 text-gray-600 hidden sm:table-cell">
                                 {servicesMap[t.service_id] ?? "--"}</td>
                             <td className="px-4 py-3 text-gray-600 sm:table-cell">
-                                {t.status === "in_progress" ? (
+                                {t.status === TICKET_STATUS.IN_PROGRESS ? (
                                     <span
                                         className="
                                                 inline-flex items-center gap-1
@@ -67,14 +69,14 @@ function TicketTable({
                                     <button
                                         disabled={
                                             loadingId === t.id ||
-                                            (hasActiveService && t.status !== "in_progress")
+                                            (hasActiveService && t.status !== TICKET_STATUS.IN_PROGRESS)
                                         }
                                         onClick={() => onStart(t.id)}
                                         className={`
                                                         rounded-lg px-4 py-2 text-sm font-semibold transition
                                                         ${loadingId === t.id
                                                 ? "bg-gray-400 cursor-wait"
-                                                : t.status === "in_progress"
+                                                : t.status === TICKET_STATUS.IN_PROGRESS
                                                     ? "bg-green-600 cursor-default"
                                                     : hasActiveService
                                                         ? "bg-gray-300 cursor-not-allowed"
@@ -84,7 +86,7 @@ function TicketTable({
                                     >
                                         {loadingId === t.id
                                             ? "Cargando..."
-                                            : t.status === "in_progress"
+                                            : t.status === TICKET_STATUS.IN_PROGRESS
                                                 ? "En Atención"
                                                 : "Iniciar Atención"}
                                     </button>
