@@ -1,9 +1,9 @@
 import type { Ticket } from "../types";
+import { capitalizeWords } from "../utils/format";
 
 type Props = {
     tickets: Ticket[];
     servicesMap: Record<string, string>;
-    capitalizeWords: (text: string) => string;
     onStart: (id: string) => void;
     hasActiveService: boolean;
     loadingId: string | null;
@@ -12,7 +12,6 @@ type Props = {
 export default function TicketTable({
     tickets,
     servicesMap,
-    capitalizeWords,
     onStart,
     hasActiveService,
     loadingId

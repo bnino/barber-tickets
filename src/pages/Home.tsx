@@ -1,137 +1,31 @@
-import { useEffect, useMemo, useState } from "react";
-import { subscribeToTickets, addTicket, startService, finishService, markNoShow } from "../services/ticketService";
-import { subscribeToServices } from "../services/servicesService";
-import type { Ticket, Service } from "../types";
-import Swal from "sweetalert2";
+import { useState } from "react";
+
 import CurrentTicket from "../components/CurrentTicket";
 import TicketTable from "../components/TicketTable";
 import ReserveForm from "../components/ReserveForm";
 
+import { useTickets } from "../hooks/useTickets";
+
+import { capitalizeWords } from "../utils/format";
+import Swal from "sweetalert2";
+
 export default function Home() {
-    const [tickets, setTickets] = useState<Ticket[]>([]);
     const [showForm, setShowForm] = useState(false);
     const [clientName, setClientName] = useState("");
-
-    const [services, setServices] = useState<Service[]>([]);
     const [serviceId, setServiceId] = useState("");
 
-    const [loadingId, setLoadingId] = useState<string | null>(null);
-
-    const current = useMemo(
-        () => tickets.find(t => t.status === "in_progress"),
-        [tickets]
-    );
-    const hasActiveService = Boolean(current);
-
-    // 🟩 LEER TURNOS EN TIEMPO REAL
-    useEffect(() => {
-        const unsub = subscribeToTickets(setTickets);
-        return () => unsub();
-    }, []);
-
-    // 🟩 LEER SERVICIOS EN TIEMPO REAL
-    useEffect(() => {
-        const unsub = subscribeToServices(setServices);
-        return () => unsub();
-    }, []);
-
-    const servicesMap = useMemo(
-        () =>
-            Object.fromEntries(
-                services.map(s => [s.id, s.name])
-            ),
-        [services]
-    );
-
-    const capitalizeWords = (text: string) => {
-        if (!text) return "";
-
-        return text
-            .toLowerCase()
-            .split(" ")
-            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-            .join(" ");
-    };
-
-    // AGREGAR NUEVO TURNO
-    const handleReserve = async (e: React.FormEvent) => {
-        e.preventDefault();
-
-        if (!clientName || !serviceId) {
-            Swal.fire({
-                icon: "warning",
-                title: "Campos incompletos",
-                text: "Debes ingresar nombre y servicio"
-            });
-            return;
-        }
-        await addTicket(clientName, serviceId);
-
-        setClientName("");
-        setServiceId("");
-        setShowForm(false);
-    };
-
-    // INICIAR ATENCIÓN DE UN TURNO
-    const startServiceHandler = async (ticketId: string) => {
-        try {
-            setLoadingId(ticketId);
-            await startService(ticketId);
-        } catch (error) {
-            console.error(error);
-        } finally {
-            setLoadingId(null);
-        }
-    };
-
-    // CLIENTE NO LLEGÓ
-    const handleNoShow = async (ticketId: string) => {
-        const result = await Swal.fire({
-            title: "¿El cliente no llegó?",
-            text: "Se marcará como cancelado y se llamará el siguiente turno",
-            icon: "warning",
-            showCancelButton: true,
-            confirmButtonColor: "#d33",
-            cancelButtonColor: "#6b7280",
-            confirmButtonText: "Sí, cancelar",
-            cancelButtonText: "No"
-        });
-
-        if (result.isConfirmed) {
-            try {
-                setLoadingId(ticketId);
-                await markNoShow(ticketId);
-
-                Swal.fire({
-                    title: "Cancelado",
-                    text: "El turno fue marcado como no presentado",
-                    icon: "success",
-                    timer: 1500,
-                    showConfirmButton: false
-                });
-
-            } catch (error) {
-                Swal.fire({
-                    title: "Error",
-                    text: "No se pudo actualizar el turno",
-                    icon: "error"
-                });
-            } finally {
-                setLoadingId(null);
-            }
-
-        }
-    };
-
-    //FINALIZAR ATENCIÓN DE UN TURNO
-    const handleFinish = async (ticketId: string) => {
-        try {
-            setLoadingId(ticketId);
-            await finishService(ticketId);
-        } finally {
-            setLoadingId(null);
-        }
-    };
+    const {
+        tickets,
+        services,
+        current,
+        hasActiveService,
+        servicesMap,
+        loadingId,
+        handleReserve,
+        startServiceHandler,
+        handleFinish,
+        handleNoShow
+    } = useTickets();
 
     return (
         <div className="min-h-screen bg-gray-100 px-4 py-6">
@@ -159,7 +53,6 @@ export default function Home() {
                             <TicketTable
                                 tickets={tickets}
                                 servicesMap={servicesMap}
-                                capitalizeWords={capitalizeWords}
                                 onStart={startServiceHandler}
                                 hasActiveService={hasActiveService}
                                 loadingId={loadingId}
@@ -182,7 +75,22 @@ export default function Home() {
                             serviceId={serviceId}
                             setServiceId={setServiceId}
                             services={services}
-                            onSubmit={handleReserve}
+                            onSubmit={async (e) => {
+                                e.preventDefault();
+                                const success = await handleReserve(clientName, serviceId);
+                                if (success) {
+                                    setClientName("");
+                                    setServiceId("");
+                                    setShowForm(false);
+
+                                    Swal.fire({
+                                        icon: "success",
+                                        title: "Turno reservado",
+                                        timer: 1200,
+                                        showConfirmButton: false
+                                    });
+                                }
+                            }}
                         />
                     )}
                 </div>
