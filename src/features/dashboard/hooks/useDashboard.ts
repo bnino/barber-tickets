@@ -92,7 +92,11 @@ export function useDashboard() {
         const count = filteredData.length;
         const average = count ? total / count : 0;
 
-        return { total, count, average };
+        return { 
+            total: Number(total) || 0, 
+            count: Number(count) || 0, 
+            average: Number(average) || 0 
+        };
     }, [filteredData]);
 
     const incomeChart = useMemo(() => {

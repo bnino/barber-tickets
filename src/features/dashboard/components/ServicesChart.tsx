@@ -12,6 +12,7 @@ import {
     Tooltip,
     ResponsiveContainer
 } from "recharts";
+import EmptyState from "./EmptyState";
 
 type Props = {
     data: { name: string; count: number }[];
@@ -19,19 +20,29 @@ type Props = {
 
 export default function ServicesChart({ data }: Props) {
     return (
-        <div className="bg-white p-4 rounded-xl shadow">
-            <h3 className="font-semibold mb-3">Servicios más prestados</h3>
+        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+            <h3 className="text-sm font-semibold text-gray-600 mb-3">
+                Servicios mas prestados
+            </h3>
 
-            <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={data}>
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip content={<ChartTooltip />} />
-                    <Bar dataKey="count"
-                        shape={<CustomBar />} />
+            {data.length === 0 ? (
+                <EmptyState
+                    title="Sin servicios registrados"
+                    description="Aquí verás cuáles servicios son más solicitados"
+                />
+            ) : (
 
-                </BarChart>
-            </ResponsiveContainer>
+                <ResponsiveContainer width="100%" height={250}>
+                    <BarChart data={data}>
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip content={<ChartTooltip />} />
+                        <Bar dataKey="count"
+                            shape={<CustomBar />} />
+
+                    </BarChart>
+                </ResponsiveContainer>
+            )}
 
             <div className="mt-3 flex flex-wrap gap-2 text-xs">
                 {data.map((item, index) => (
@@ -44,6 +55,6 @@ export default function ServicesChart({ data }: Props) {
                     </div>
                 ))}
             </div>
-        </div>
+        </div >
     );
 }

@@ -1,4 +1,4 @@
-import { db } from "./firebaseService";
+import { db } from "../../../shared/services/firebaseService";
 import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
 import type { Service } from "../types";
 

@@ -1,4 +1,4 @@
-import { db } from "../../tickets/services/firebaseService";
+import { db } from "../../../shared/services/firebaseService";
 import {
     collection,
     query,

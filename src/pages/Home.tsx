@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 
 import CurrentTicket from "../features/tickets/components/CurrentTicket";
 import TicketTable from "../features/tickets/components/TicketTable";
@@ -8,6 +7,8 @@ import FinishModal from "../features/tickets/components/FinishModal";
 
 import { useTickets } from "../features/tickets/hooks/useTickets";
 import { useAlert } from "../features/tickets/hooks/useAlert";
+
+import { useSettings } from "../features/settings/hooks/useSettings";
 
 import FloatingMenu from "../shared/components/FloatingMenu";
 
@@ -22,7 +23,7 @@ export default function Home() {
     const [price, setPrice] = useState<number | null>(null);
     const [paymentMethod, setPaymentMethod] = useState<"cash" | "nequi">("cash");
 
-    const navigate = useNavigate();
+    const { isOpen } = useSettings();
 
     const {
         tickets,
@@ -104,8 +105,8 @@ export default function Home() {
                 </div>
                 <div className="mt-7.5 p-5 rounded-xl bg-gray-100 shadow-lg text-center">
 
-                    <button className="px-6 py-3.5 text-base font-semibold rounded-lg border-none cursor-pointer bg-gray-900 text-white transition-transform duration-150 ease-in-out hover:bg-black hover:scale-105" onClick={() => setShowForm(prev => !prev)}>
-                        Reservar turno
+                    <button disabled={!isOpen} className="px-6 py-3.5 text-base font-semibold rounded-lg border-none cursor-pointer bg-gray-900 text-white transition-transform duration-150 ease-in-out hover:bg-black hover:scale-105" onClick={() => setShowForm(prev => !prev)}>
+                        {isOpen ? "Reservar turno" : "Negocio cerrado"}
                     </button>
 
                     {showForm && (
