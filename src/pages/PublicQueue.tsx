@@ -11,6 +11,7 @@ export default function PublicQueue() {
 
     // Reloj para cronómetro
     useEffect(() => {
+        document.body.style.background = "black";
         const interval = setInterval(() => {
             setNow(Date.now());
         }, 1000);
