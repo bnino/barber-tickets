@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState} from "react";
 
 import CurrentTicket from "../features/tickets/components/CurrentTicket";
 import TicketTable from "../features/tickets/components/TicketTable";
@@ -11,6 +11,8 @@ import { useAlert } from "../features/tickets/hooks/useAlert";
 import { useSettings } from "../features/settings/hooks/useSettings";
 
 import FloatingMenu from "../shared/components/FloatingMenu";
+
+import { useAuth } from "../features/auth/context/AuthContext";
 
 export default function Home() {
     const [showForm, setShowForm] = useState(false);
@@ -38,6 +40,8 @@ export default function Home() {
         handleNoShow
     } = useTickets();
 
+    const { user } = useAuth();
+
     return (
         <div className="min-h-screen bg-gray-100 px-4 py-6">
             <div className="mx-auto w-full max-w-4xl rounded-2xl bg-white p-6 shadow-lg">
@@ -46,6 +50,7 @@ export default function Home() {
                         id={current.id}
                         clientName={current.clientNameFormatted}
                         serviceName={current.serviceName}
+                        user={user}
 
                         onFinish={(id) => {
 
@@ -88,6 +93,7 @@ export default function Home() {
                             <TicketTable
                                 tickets={tickets}
                                 servicesMap={servicesMap}
+                                user={user}
                                 onStart={async (id) => {
                                     const res = await startServiceHandler(id);
 

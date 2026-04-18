@@ -7,15 +7,16 @@ type Props = {
     onFinish: (id: string) => void;
     onNoShow: (id: string) => void;
     loading: boolean;
+    user: any;
 };
-
 function CurrentTicket({
     id,
     clientName,
     serviceName,
     onFinish,
     onNoShow,
-    loading
+    loading, 
+    user
 }: Props) {
     return (
         <div
@@ -32,23 +33,25 @@ function CurrentTicket({
                 </span>
             </div>
 
-            <div className="absolute bottom-1 right-1 flex flex-col items-end gap-1">
-                <button
-                    onClick={() => onFinish(id)}
-                    disabled={loading}
-                    className="mt-4 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 transition cursor-pointer disabled:bg-gray-400"
-                >
-                    {loading ? "Cargando..." : "Finalizar"}
-                </button>
-                <button
-                    type="button"
-                    onClick={() => onNoShow(id)}
-                    disabled={loading}
-                    className="text-xs font-bold text-shadow-sm/30 underline disabled:opacity-50 cursor-pointer"
-                >
-                    {loading ? "Procesando..." : "No llegó / Cancelar"}
-                </button>
-            </div>
+            {user?.role === "admin" && (
+                <div className="absolute bottom-1 right-1 flex flex-col items-end gap-1">
+                    <button
+                        onClick={() => onFinish(id)}
+                        disabled={loading}
+                        className="mt-4 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 transition cursor-pointer disabled:bg-gray-400"
+                    >
+                        {loading ? "Cargando..." : "Finalizar"}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => onNoShow(id)}
+                        disabled={loading}
+                        className="text-xs font-bold text-shadow-sm/30 underline disabled:opacity-50 cursor-pointer"
+                    >
+                        {loading ? "Procesando..." : "No llegó / Cancelar"}
+                    </button>
+                </div>
+            )}
         </div>
     )
 }
