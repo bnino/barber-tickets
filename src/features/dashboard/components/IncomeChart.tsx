@@ -8,16 +8,26 @@ import {
     Tooltip,
     ResponsiveContainer
 } from "recharts";
+import EmptyState from "./EmptyState";
 
 type Props = {
     data: { label: string; value: number }[];
 };
 
+
+
 export default function IncomeChart({ data }: Props) {
     return (
-        <div className="bg-white p-4 rounded-xl shadow">
-            <h3 className="font-semibold mb-3">Ingresos</h3>
-
+        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+            <h3 className="text-sm font-semibold text-gray-600 mb-3">
+                Ingresos totales
+            </h3>
+            {data.length === 0 ? (
+            <EmptyState
+                title="Sin ingresos registrados"
+                description="Los ingresos aparecerán cuando finalices servicios"
+            />
+            ) : (
             <ResponsiveContainer width="100%" height={250}>
                 <LineChart data={data}>
                     <XAxis dataKey="label" />
@@ -26,6 +36,7 @@ export default function IncomeChart({ data }: Props) {
                     <Line type="monotone" dataKey="value" strokeWidth={3} />
                 </LineChart>
             </ResponsiveContainer>
+            )}
         </div>
     );
 }

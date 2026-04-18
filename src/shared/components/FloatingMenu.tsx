@@ -7,6 +7,7 @@ export default function FloatingMenu() {
 
     const items = [
         { label: "Home", icon: "🏠", path: "/" },
+        { label: "Admin", icon: "⚙️", path: "/admin" },
         { label: "Dashboard", icon: "📊", path: "/dashboard" },
         { label: "TV", icon: "📺", path: "/tv" }
     ];
