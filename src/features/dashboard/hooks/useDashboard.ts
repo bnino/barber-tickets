@@ -1,6 +1,9 @@
 import { useEffect, useState, useMemo } from "react";
 import { getRecentTickets } from "../services/dashboardService";
 
+import { subscribeToServices } from "../../tickets/services/servicesService";
+import type { Service } from "../../tickets/types";
+
 let cache: any = null;
 let lastFetch = 0;
 const CACHE_TIME = 1000 * 60 * 5; // 5 minutos
@@ -12,19 +15,38 @@ export function useDashboard() {
     const [filter, setFilter] = useState<FilterType>("today");
     const [loading, setLoading] = useState(true);
 
+    const [services, setServices] = useState<Service[]>([]);
+
+    const servicesMap = useMemo(
+        () => Object.fromEntries(
+            services.map(s => [s.id, { name: s.name, price: s.price }])
+        ),
+        [services]
+    );
+
     useEffect(() => {
 
         if (cache && Date.now() - lastFetch < CACHE_TIME) {
+            setData(cache);
+            setLoading(false);
             return;
         }
 
         const load = async () => {
-
             const res = await getRecentTickets();
+            cache = res;
+            lastFetch = Date.now();
             setData(res);
             setLoading(false)
         };
+
         load();
+
+        const unsubServices = subscribeToServices(setServices);
+        return () => {
+            unsubServices();
+        };
+
     }, []);
 
     const filteredData = useMemo(() => {
@@ -73,10 +95,69 @@ export function useDashboard() {
         return { total, count, average };
     }, [filteredData]);
 
+    const incomeChart = useMemo(() => {
+        const map: Record<string, number> = {};
+
+        filteredData.forEach(t => {
+            const date = t.finished_at.toDate();
+            let key = "";
+
+            if (filter === "today") {
+                key = `${date.getHours()}:00`;
+            }
+
+            if (filter === "week" || filter === "month") {
+                key = date.toLocaleDateString("es-CO", {
+                    day: "2-digit",
+                    month: "2-digit"
+                });
+            }
+
+            map[key] = (map[key] || 0) + (t.price || 0);
+        });
+
+        return Object.entries(map).map(([label, value]) => ({
+            label,
+            value
+        }));
+    }, [filteredData, filter]);
+
+    const servicesChart = useMemo(() => {
+        const map: Record<string, number> = {};
+
+        filteredData.forEach(t => {
+            const service = servicesMap[t.service_id]?.name || "Servicio";
+
+            map[service] = (map[service] || 0) + 1;
+        });
+
+        return Object.entries(map).map(([name, count]) => ({
+            name,
+            count
+        }));
+    }, [filteredData, servicesMap]);
+
+    const incomeByService = useMemo(() => {
+        const map: Record<string, number> = {};
+
+        filteredData.forEach(t => {
+            const service = servicesMap[t.service_id]?.name || "Servicio";
+            map[service] = (map[service] || 0) + (t.price || 0);
+        });
+
+        return Object.entries(map).map(([name, value]) => ({
+            name,
+            value
+        }));
+    }, [filteredData]);
+
     return {
         stats,
         filter,
         setFilter,
-        loading
+        loading,
+        incomeChart,
+        servicesChart,
+        incomeByService
     };
 }
