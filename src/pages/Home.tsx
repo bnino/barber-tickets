@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import CurrentTicket from "../features/tickets/components/CurrentTicket";
 import TicketTable from "../features/tickets/components/TicketTable";
@@ -7,6 +8,8 @@ import FinishModal from "../features/tickets/components/FinishModal";
 
 import { useTickets } from "../features/tickets/hooks/useTickets";
 import { useAlert } from "../features/tickets/hooks/useAlert";
+
+import FloatingMenu from "../shared/components/FloatingMenu";
 
 export default function Home() {
     const [showForm, setShowForm] = useState(false);
@@ -18,6 +21,8 @@ export default function Home() {
     const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
     const [price, setPrice] = useState<number | null>(null);
     const [paymentMethod, setPaymentMethod] = useState<"cash" | "nequi">("cash");
+
+    const navigate = useNavigate();
 
     const {
         tickets,
@@ -161,7 +166,7 @@ export default function Home() {
                     setSelectedTicketId(null);
                 }}
             />
+            <FloatingMenu />
         </div>
-
     );
 }
