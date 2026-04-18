@@ -1,5 +1,8 @@
 import StatsCard from "../features/dashboard/components/StatsCard";
 import FilterTabs from "../features/dashboard/components/FilterTabs";
+import IncomeChart from "../features/dashboard/components/IncomeChart";
+import ServicesChart from "../features/dashboard/components/ServicesChart";
+import IncomeByService from "../features/dashboard/components/IncomeByServiceChart";
 
 import { useDashboard } from "../features/dashboard/hooks/useDashboard";
 
@@ -8,7 +11,7 @@ import { formatCOP } from "../shared/utils/currency";
 import FloatingMenu from "../shared/components/FloatingMenu";
 
 export default function Dashboard() {
-    const { stats, loading, filter, setFilter } = useDashboard();
+    const { stats, loading, filter, setFilter, incomeChart, servicesChart, incomeByService } = useDashboard();
 
     if (loading) return <p className="p-6">Cargando...</p>;
 
@@ -43,6 +46,12 @@ export default function Dashboard() {
                     title="Promedio"
                     value={`$ ${formatCOP(stats.average)}`}
                 />
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6 mt-5">
+                <IncomeChart data={incomeChart} />
+                <ServicesChart data={servicesChart} />
+                <IncomeByService data={incomeByService} />
             </div>
 
             <FloatingMenu />
