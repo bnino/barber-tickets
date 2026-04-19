@@ -96,7 +96,7 @@ export default function Navbar() {
 
                             <div className="px-3 py-2 border-b">
                                 <p className="text-sm font-semibold truncate">
-                                    {user.email}
+                                    {user.displayName || user.email}
                                 </p>
                                 <p className="text-xs text-gray-500">
                                     {user.role}

@@ -92,10 +92,10 @@ export function useDashboard() {
         const count = filteredData.length;
         const average = count ? total / count : 0;
 
-        return { 
-            total: Number(total) || 0, 
-            count: Number(count) || 0, 
-            average: Number(average) || 0 
+        return {
+            total: Number(total) || 0,
+            count: Number(count) || 0,
+            average: Number(average) || 0
         };
     }, [filteredData]);
 
@@ -155,6 +155,34 @@ export function useDashboard() {
         }));
     }, [filteredData]);
 
+    const paymentStats = useMemo(() => {
+        let cashTotal = 0;
+        let nequiTotal = 0;
+        let cashCount = 0;
+        let nequiCount = 0;
+
+        filteredData.forEach(t => {
+            if (!t.payment_method) return;
+
+            if (t.payment_method === "cash") {
+                cashTotal += t.price || 0;
+                cashCount++;
+            }
+
+            if (t.payment_method === "nequi") {
+                nequiTotal += t.price || 0;
+                nequiCount++;
+            }
+        });
+
+        return {
+            cashTotal,
+            nequiTotal,
+            cashCount,
+            nequiCount
+        };
+    }, [filteredData]);
+
     return {
         stats,
         filter,
@@ -162,6 +190,7 @@ export function useDashboard() {
         loading,
         incomeChart,
         servicesChart,
-        incomeByService
+        incomeByService,
+        paymentStats
     };
 }

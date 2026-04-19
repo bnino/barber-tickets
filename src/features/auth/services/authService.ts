@@ -5,7 +5,8 @@ import {
   signInWithEmailAndPassword,
   onAuthStateChanged,
   signOut,
-  createUserWithEmailAndPassword
+  createUserWithEmailAndPassword,
+  updateProfile
 } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 
@@ -65,6 +66,10 @@ export const registerUser = async (
     name,
     role: "user"
   });
+
+  await updateProfile(res.user, {
+    displayName: name
+});
 
   return res.user;
 };

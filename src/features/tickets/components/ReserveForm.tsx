@@ -2,6 +2,8 @@ import type { Service } from "../types";
 
 import { memo } from "react";
 
+import { sanitizeName } from "../../../shared/utils/sanitize";
+
 type Props = {
     clientName: string;
     setClientName: (value: string) => void;

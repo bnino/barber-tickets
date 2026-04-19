@@ -3,12 +3,12 @@ import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAFeUyJd48Gi-w7WaXkmjgK6IKdOWDxZ8A",
-  authDomain: "barberia-tickets-prod.firebaseapp.com",
-  projectId: "barberia-tickets-prod",
-  storageBucket: "barberia-tickets-prod.firebasestorage.app",
-  messagingSenderId: "873650298006",
-  appId: "1:873650298006:web:7131b3a1d040e0d8d0b6b7",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
 const app = initializeApp(firebaseConfig);

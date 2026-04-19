@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSettings } from "./useSettings";
 import { updateSettings } from "../services/settingsService";
+import { sanitizeText } from "../../../shared/utils/sanitize";
 
 export function useSettingsForm() {
     const { settings } = useSettings();
@@ -8,6 +9,8 @@ export function useSettingsForm() {
     const [companyName, setCompanyName] = useState("");
     const [isOpen, setIsOpen] = useState(true);
     const [workingDays, setWorkingDays] = useState<string[]>([]);
+
+    const cleanCompanyName = sanitizeText(companyName);
 
     useEffect(() => {
         if (settings) {
@@ -27,7 +30,7 @@ export function useSettingsForm() {
 
     const save = async () => {
         await updateSettings({
-            company_name: companyName,
+            company_name: cleanCompanyName,
             is_open: isOpen,
             working_days: workingDays
         });
