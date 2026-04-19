@@ -1,4 +1,4 @@
-import { useState} from "react";
+import { useState } from "react";
 
 import CurrentTicket from "../features/tickets/components/CurrentTicket";
 import TicketTable from "../features/tickets/components/TicketTable";
@@ -10,9 +10,8 @@ import { useAlert } from "../features/tickets/hooks/useAlert";
 
 import { useSettings } from "../features/settings/hooks/useSettings";
 
-import FloatingMenu from "../shared/components/FloatingMenu";
-
 import { useAuth } from "../features/auth/context/AuthContext";
+import { sanitizeName } from "../shared/utils/sanitize";
 
 export default function Home() {
     const [showForm, setShowForm] = useState(false);
@@ -124,7 +123,13 @@ export default function Home() {
                             services={services}
                             onSubmit={async (e) => {
                                 e.preventDefault();
-                                const res = await handleReserve(clientName, serviceId);
+                                const cleanName = sanitizeName(clientName);
+                                if (!cleanName) {
+                                    alert.warning("Ingresa un nombre válido");
+                                    return;
+                                }
+                                
+                                const res = await handleReserve(cleanName, serviceId);
                                 if (res.ok) {
                                     setClientName("");
                                     setServiceId("");
@@ -173,7 +178,6 @@ export default function Home() {
                     setSelectedTicketId(null);
                 }}
             />
-            <FloatingMenu />
         </div>
     );
 }

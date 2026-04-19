@@ -40,6 +40,7 @@ The content is organized as follows:
 </file_summary>
 
 <directory_structure>
+.env.example
 .gitignore
 eslint.config.js
 index.html
@@ -93,6 +94,7 @@ src/shared/utils/chartColors.ts
 src/shared/utils/currency.ts
 src/shared/utils/errorHandler.ts
 src/shared/utils/format.ts
+src/shared/utils/sanitize.ts
 tsconfig.app.json
 tsconfig.json
 tsconfig.node.json
@@ -102,171 +104,30 @@ vite.config.ts
 <files>
 This section contains the contents of the repository's files.
 
-<file path="src/features/auth/components/PublicRoute.tsx">
-import { Navigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-
-type Props = {
-  children: any;
-};
-
-export default function PublicRoute({ children }: Props) {
-  const { user, loading } = useAuth();
-
-  if (loading) return <div className="p-6">Cargando...</div>;
-
-  if (user) return <Navigate to="/" />;
-
-  return children;
-}
+<file path=".env.example">
+VITE_FIREBASE_API_KEY=
+VITE_FIREBASE_AUTH_DOMAIN=
+VITE_FIREBASE_PROJECT_ID=
+VITE_FIREBASE_STORAGE_BUCKET=
+VITE_FIREBASE_MESSAGING_SENDER_ID=
+VITE_FIREBASE_APP_ID=
 </file>
 
-<file path="src/shared/components/Navbar.tsx">
-import { Link } from "react-router-dom";
-import { signOut } from "firebase/auth";
-import { useState, useRef, useEffect } from "react";
+<file path="src/shared/utils/sanitize.ts">
+export const sanitizeText = (text: string) => {
+  return text
+    .trim() // quita espacios al inicio y final
+    .replace(/\s+/g, " "); // evita espacios dobles
+};
 
-import { useAuth } from "../../features/auth/context/AuthContext";
-import { auth } from "../services/firebaseService";
+export const sanitizeName = (name: string) => {
+  return sanitizeText(name)
+    .replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, ""); // solo letras
+};
 
-import { useSettings } from "../../features/settings/hooks/useSettings";
-
-export default function Navbar() {
-
-    const { user } = useAuth();
-    const { companyName } = useSettings();
-
-    const [open, setOpen] = useState(false);
-    const dropdownRef = useRef<HTMLDivElement>(null);
-
-    const handleLogout = async () => {
-        await signOut(auth);
-    };
-
-    const getInitial = () => {
-        if (user?.email) return user.email.charAt(0).toUpperCase();
-        return "U";
-    };
-
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (
-                dropdownRef.current &&
-                !dropdownRef.current.contains(event.target as Node)
-            ) {
-                setOpen(false);
-            }
-        };
-
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
-
-    return (
-        <nav className="bg-white shadow px-6 py-3 flex justify-between items-center">
-
-            {/* Left */}
-            <div className="flex items-center gap-6">
-                <Link to="/" className="font-bold text-lg">
-                    💈 {companyName}
-                </Link>
-
-                <Link to="/" className="text-sm text-gray-600 hover:text-black">
-                    Turnos
-                </Link>
-
-                <Link to="/dashboard" className="text-sm text-gray-600 hover:text-black">
-                    Dashboard
-                </Link>
-
-                {user?.role === "admin" && (
-                    <Link to="/admin" className="text-sm text-gray-600 hover:text-black">
-                        Admin
-                    </Link>
-                )}
-            </div>
-
-            {/* Right */}
-            <div className="relative" ref={dropdownRef}>
-
-                {!user ? (
-                    <Link
-                        to="/login"
-                        className="text-sm font-semibold bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 "
-                    >
-                        Iniciar sesión
-                    </Link>
-                ) : (
-                    <>
-                        <button
-                            onClick={() => setOpen(!open)}
-                            className="cursor-pointer w-9 h-9 rounded-full bg-gray-900 text-white flex items-center justify-center font-bold hover:scale-105 transition"
-                        >
-                            {user.photoURL ? (
-                                <img
-                                    src={user.photoURL}
-                                    alt="avatar"
-                                    className="w-full h-full object-cover"
-                                />
-                            ) : (
-                                getInitial()
-                            )}
-                        </button>
-                        
-                        <div
-                            className={`absolute right-0 mt-2 w-52 bg-white border rounded-xl shadow-lg p-2 z-50 transition-all duration-200 origin-top-right
-                            ${open ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"}`}
-                        >
-
-                            <div className="px-3 py-2 border-b">
-                                <p className="text-sm font-semibold truncate">
-                                    {user.email}
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                    {user.role}
-                                </p>
-                            </div>
-                            <Link
-                                to="/"
-                                className="block px-3 py-2 text-sm hover:bg-gray-100 rounded transition"
-                                onClick={() => setOpen(false)}
-                            >
-                                Turnos
-                            </Link>
-
-                            {user.role === "admin" && (
-                                <>
-                                    <Link
-                                        to="/dashboard"
-                                        className="block px-3 py-2 text-sm hover:bg-gray-100 rounded transition"
-                                        onClick={() => setOpen(false)}
-                                    >
-                                        Dashboard
-                                    </Link>
-                                    <Link
-                                        to="/admin"
-                                        className="block px-3 py-2 text-sm hover:bg-gray-100 rounded transition"
-                                        onClick={() => setOpen(false)}
-                                    >
-                                        Panel Admin
-                                    </Link>
-                                </>
-                            )}
-
-                            <button
-                                onClick={handleLogout}
-                                className="cursor-pointer w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-gray-100 rounded transition"
-                            >
-                                Cerrar sesión
-                            </button>
-                        </div>
-
-                    </>
-                )}
-            </div>
-        </nav>
-    );
-}
+export const sanitizeEmail = (email: string) => {
+  return sanitizeText(email).toLowerCase();
+};
 </file>
 
 <file path=".gitignore">
@@ -467,6 +328,25 @@ import { Navigate } from "react-router-dom";
   }
 </file>
 
+<file path="src/features/auth/components/PublicRoute.tsx">
+import { Navigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+
+type Props = {
+  children: any;
+};
+
+export default function PublicRoute({ children }: Props) {
+  const { user, loading } = useAuth();
+
+  if (loading) return <div className="p-6">Cargando...</div>;
+
+  if (user) return <Navigate to="/" />;
+
+  return children;
+}
+</file>
+
 <file path="src/features/auth/context/AuthContext.tsx">
 import { createContext, useContext, useEffect, useState } from "react";
 import { subscribeToAuth, getUserRole } from "../services/authService";
@@ -521,7 +401,8 @@ import {
   signInWithEmailAndPassword,
   onAuthStateChanged,
   signOut,
-  createUserWithEmailAndPassword
+  createUserWithEmailAndPassword,
+  updateProfile
 } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 
@@ -581,6 +462,10 @@ export const registerUser = async (
     name,
     role: "user"
   });
+
+  await updateProfile(res.user, {
+    displayName: name
+});
 
   return res.user;
 };
@@ -722,6 +607,7 @@ export function useSettings() {
 import { useEffect, useState } from "react";
 import { useSettings } from "./useSettings";
 import { updateSettings } from "../services/settingsService";
+import { sanitizeText } from "../../../shared/utils/sanitize";
 
 export function useSettingsForm() {
     const { settings } = useSettings();
@@ -729,6 +615,8 @@ export function useSettingsForm() {
     const [companyName, setCompanyName] = useState("");
     const [isOpen, setIsOpen] = useState(true);
     const [workingDays, setWorkingDays] = useState<string[]>([]);
+
+    const cleanCompanyName = sanitizeText(companyName);
 
     useEffect(() => {
         if (settings) {
@@ -748,7 +636,7 @@ export function useSettingsForm() {
 
     const save = async () => {
         await updateSettings({
-            company_name: companyName,
+            company_name: cleanCompanyName,
             is_open: isOpen,
             working_days: workingDays
         });
@@ -792,6 +680,8 @@ export const updateSettings = async (data: any) => {
 import type { Service } from "../types";
 
 import { memo } from "react";
+
+import { sanitizeName } from "../../../shared/utils/sanitize";
 
 type Props = {
     clientName: string;
@@ -930,8 +820,6 @@ export function useAlert() {
 import { useSettingsForm } from "../features/settings/hooks/useSettingsForm";
 import { useAlert } from "../features/tickets/hooks/useAlert";
 
-import FloatingMenu from "../shared/components/FloatingMenu";
-
 const DAYS = [
     "lunes",
     "martes",
@@ -957,18 +845,18 @@ export default function Admin() {
 
     return (
         <div className="min-h-screen bg-gray-100 p-6">
-            <div className="max-w-xl mx-auto bg-white rounded-xl shadow p-6">
+            <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-xl p-8 space-y-6">
 
                 <h1 className="text-xl font-bold mb-6">
                     ⚙️ Configuración del negocio
                 </h1>
 
-                <div className="mb-4">
+                <div className="bg-gray-50 p-4 rounded-xl border">
                     <label className="text-sm font-semibold">Nombre del negocio</label>
                     <input
                         value={companyName}
                         onChange={(e) => setCompanyName(e.target.value)}
-                        className="w-full mt-1 p-2 border rounded"
+                        className="w-full mt-2 p-2 border rounded-lg focus:ring-2 focus:ring-black"
                     />
                 </div>
 
@@ -976,15 +864,15 @@ export default function Admin() {
                     <span className="text-sm font-semibold">Estado del negocio</span>
                     <button
                         onClick={() => setIsOpen(!isOpen)}
-                        className={`px-3 py-1 rounded text-white ${
-                            isOpen ? "bg-green-600" : "bg-red-600"
-                        }`}
+                        className={`px-4 py-2 rounded-lg text-white font-semibold transition ${
+        isOpen ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"
+    }`}
                     >
                         {isOpen ? "Abierto" : "Cerrado"}
                     </button>
                 </div>
 
-                <div className="mb-6">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     <p className="text-sm font-semibold mb-2">
                         Días laborales
                     </p>
@@ -1017,7 +905,6 @@ export default function Admin() {
                 </button>
 
             </div>
-            <FloatingMenu />
         </div>
     );
 }
@@ -1145,99 +1032,6 @@ export default function Login() {
 }
 </file>
 
-<file path="src/pages/Register.tsx">
-import { useState } from "react";
-import { registerUser } from "../features/auth/services/authService";
-import { useNavigate, Link } from "react-router-dom";
-
-export default function Register() {
-    const [name, setName] = useState("");
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [loading, setLoading] = useState(false);
-
-    const navigate = useNavigate();
-
-    const handleRegister = async (e: any) => {
-        e.preventDefault();
-
-        if (!name || !email || !password) {
-            alert("Completa todos los campos");
-            return;
-        }
-
-        if (password.length < 6) {
-            alert("La contraseña debe tener al menos 6 caracteres");
-            return;
-        }
-
-        try {
-            setLoading(true);
-            await registerUser(email, password, name);
-            navigate("/");
-        } catch (error) {
-            alert("Error al registrarse");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
-            <div className="bg-white p-6 rounded-2xl shadow-lg w-full max-w-sm">
-
-                <h1 className="text-2xl font-bold mb-1 text-center">
-                    Crear cuenta
-                </h1>
-
-                <p className="text-sm text-gray-500 mb-4 text-center">
-                    Regístrate para gestionar tu barbería
-                </p>
-
-                <form onSubmit={handleRegister} className="flex flex-col gap-3">
-
-                    <input
-                        placeholder="Nombre"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        className="border p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                    />
-
-                    <input
-                        placeholder="Correo electrónico"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="border p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                    />
-
-                    <input
-                        type="password"
-                        placeholder="Contraseña"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="border p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                    />
-
-                    <button
-                        disabled={loading}
-                        className="bg-black text-white p-2 rounded-lg mt-2 hover:bg-gray-900 transition disabled:opacity-50"
-                    >
-                        {loading ? "Creando..." : "Registrarse"}
-                    </button>
-                </form>
-
-                <p className="text-xs text-center mt-4 text-gray-500">
-                    ¿Ya tienes cuenta?{" "}
-                    <Link to="/login" className="text-black font-semibold">
-                        Inicia sesión
-                    </Link>
-                </p>
-            </div>
-        </div>
-    );
-}
-</file>
-
 <file path="src/shared/components/ChartTooltip.tsx">
 type Props = {
     active?: boolean;
@@ -1266,18 +1060,166 @@ export default function ChartTooltip({ active, payload, label }: Props) {
 }
 </file>
 
+<file path="src/shared/components/Navbar.tsx">
+import { Link } from "react-router-dom";
+import { signOut } from "firebase/auth";
+import { useState, useRef, useEffect } from "react";
+
+import { useAuth } from "../../features/auth/context/AuthContext";
+import { auth } from "../services/firebaseService";
+
+import { useSettings } from "../../features/settings/hooks/useSettings";
+
+export default function Navbar() {
+
+    const { user } = useAuth();
+    const { companyName } = useSettings();
+
+    const [open, setOpen] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    const handleLogout = async () => {
+        await signOut(auth);
+    };
+
+    const getInitial = () => {
+        if (user?.email) return user.email.charAt(0).toUpperCase();
+        return "U";
+    };
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (
+                dropdownRef.current &&
+                !dropdownRef.current.contains(event.target as Node)
+            ) {
+                setOpen(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    return (
+        <nav className="bg-white shadow px-6 py-3 flex justify-between items-center">
+
+            {/* Left */}
+            <div className="flex items-center gap-6">
+                <Link to="/" className="font-bold text-lg">
+                    💈 {companyName}
+                </Link>
+
+                <Link to="/" className="text-sm text-gray-600 hover:text-black">
+                    Turnos
+                </Link>
+
+                <Link to="/dashboard" className="text-sm text-gray-600 hover:text-black">
+                    Dashboard
+                </Link>
+
+                {user?.role === "admin" && (
+                    <Link to="/admin" className="text-sm text-gray-600 hover:text-black">
+                        Admin
+                    </Link>
+                )}
+            </div>
+
+            {/* Right */}
+            <div className="relative" ref={dropdownRef}>
+
+                {!user ? (
+                    <Link
+                        to="/login"
+                        className="text-sm font-semibold bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 "
+                    >
+                        Iniciar sesión
+                    </Link>
+                ) : (
+                    <>
+                        <button
+                            onClick={() => setOpen(!open)}
+                            className="cursor-pointer w-9 h-9 rounded-full bg-gray-900 text-white flex items-center justify-center font-bold hover:scale-105 transition"
+                        >
+                            {user.photoURL ? (
+                                <img
+                                    src={user.photoURL}
+                                    alt="avatar"
+                                    className="w-full h-full object-cover"
+                                />
+                            ) : (
+                                getInitial()
+                            )}
+                        </button>
+                        
+                        <div
+                            className={`absolute right-0 mt-2 w-52 bg-white border rounded-xl shadow-lg p-2 z-50 transition-all duration-200 origin-top-right
+                            ${open ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"}`}
+                        >
+
+                            <div className="px-3 py-2 border-b">
+                                <p className="text-sm font-semibold truncate">
+                                    {user.displayName || user.email}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                    {user.role}
+                                </p>
+                            </div>
+                            <Link
+                                to="/"
+                                className="block px-3 py-2 text-sm hover:bg-gray-100 rounded transition"
+                                onClick={() => setOpen(false)}
+                            >
+                                Turnos
+                            </Link>
+
+                            {user.role === "admin" && (
+                                <>
+                                    <Link
+                                        to="/dashboard"
+                                        className="block px-3 py-2 text-sm hover:bg-gray-100 rounded transition"
+                                        onClick={() => setOpen(false)}
+                                    >
+                                        Dashboard
+                                    </Link>
+                                    <Link
+                                        to="/admin"
+                                        className="block px-3 py-2 text-sm hover:bg-gray-100 rounded transition"
+                                        onClick={() => setOpen(false)}
+                                    >
+                                        Panel Admin
+                                    </Link>
+                                </>
+                            )}
+
+                            <button
+                                onClick={handleLogout}
+                                className="cursor-pointer w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-gray-100 rounded transition"
+                            >
+                                Cerrar sesión
+                            </button>
+                        </div>
+
+                    </>
+                )}
+            </div>
+        </nav>
+    );
+}
+</file>
+
 <file path="src/shared/services/firebaseService.ts">
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAFeUyJd48Gi-w7WaXkmjgK6IKdOWDxZ8A",
-  authDomain: "barberia-tickets-prod.firebaseapp.com",
-  projectId: "barberia-tickets-prod",
-  storageBucket: "barberia-tickets-prod.firebasestorage.app",
-  messagingSenderId: "873650298006",
-  appId: "1:873650298006:web:7131b3a1d040e0d8d0b6b7",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
 const app = initializeApp(firebaseConfig);
@@ -1840,6 +1782,110 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     </BrowserRouter>
   </React.StrictMode>,
 )
+</file>
+
+<file path="src/pages/Register.tsx">
+import { useState } from "react";
+import { registerUser } from "../features/auth/services/authService";
+import { useNavigate, Link } from "react-router-dom";
+
+import { sanitizeName, sanitizeEmail } from "../shared/utils/sanitize";
+
+export default function Register() {
+    const [name, setName] = useState("");
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
+
+    const cleanName = sanitizeName(name);
+    const cleanEmail = sanitizeEmail(email);
+
+    const navigate = useNavigate();
+
+    const handleRegister = async (e: any) => {
+        e.preventDefault();
+
+        if (!cleanName || !cleanEmail || !password) {
+            setError("Completa todos los campos");
+            return;
+        }
+
+        if (password.length < 6) {
+            setError("La contraseña debe tener al menos 6 caracteres");
+            return;
+        }
+
+        try {
+            setError("");
+            setLoading(true);
+            await registerUser(cleanEmail, password, cleanName);
+            navigate("/");
+        } catch (error) {
+            setError("Error al registrarse");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
+            <div className="bg-white p-6 rounded-2xl shadow-lg w-full max-w-sm">
+
+                <h1 className="text-2xl font-bold mb-1 text-center">
+                    Crear cuenta
+                </h1>
+
+                <p className="text-sm text-gray-500 mb-4 text-center">
+                    Regístrate para gestionar tu barbería
+                </p>
+
+                <form onSubmit={handleRegister} className="flex flex-col gap-3">
+
+                    <input
+                        placeholder="Nombre"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        className="border p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                    />
+
+                    <input
+                        placeholder="Correo electrónico"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="border p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                    />
+
+                    <input
+                        type="password"
+                        placeholder="Contraseña"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="border p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                    />
+
+                    {error && (
+                        <p className="text-red-500 text-sm text-center">{error}</p>
+                    )}
+
+                    <button
+                        disabled={loading}
+                        className="bg-black text-white p-2 rounded-lg mt-2 hover:bg-gray-900 transition disabled:opacity-50"
+                    >
+                        {loading ? "Creando..." : "Registrarse"}
+                    </button>
+                </form>
+
+                <p className="text-xs text-center mt-4 text-gray-500">
+                    ¿Ya tienes cuenta?{" "}
+                    <Link to="/login" className="text-black font-semibold">
+                        Inicia sesión
+                    </Link>
+                </p>
+            </div>
+        </div>
+    );
+}
 </file>
 
 <file path="src/shared/components/FloatingMenu.tsx">
@@ -2441,38 +2487,23 @@ import IncomeChart from "../features/dashboard/components/IncomeChart";
 import ServicesChart from "../features/dashboard/components/ServicesChart";
 import IncomeByService from "../features/dashboard/components/IncomeByServiceChart";
 
-import { useSettings } from "../features/settings/hooks/useSettings";
-
 import { useDashboard } from "../features/dashboard/hooks/useDashboard";
 
 import { formatCOP } from "../shared/utils/currency";
 
-import FloatingMenu from "../shared/components/FloatingMenu";
-
-
 export default function Dashboard() {
     const { stats, loading, filter, setFilter, incomeChart, servicesChart, incomeByService } = useDashboard();
-    const { companyName } = useSettings();
 
     if (loading) return <p className="p-6">Cargando...</p>;
 
     return (
         <div className="min-h-screen bg-gray-100 p-6">
-
-            <div className="mb-6">
-                <div className="text-center">
-                    <h1 className="text-4xl font-bold text-gray-800">
-                        {companyName}
-                    </h1>
-                </div>
-            <div className="border-t border-gray-300 my-6" />
-                <h3 className="text-2xl font-bold text-gray-900">
-                    📊 Dashboard
-                </h3>
-                <p className="text-sm text-gray-500">
-                    Resumen de ingresos y servicios
-                </p>
-            </div>
+            <h3 className="text-2xl font-bold text-gray-900">
+                📊 Dashboard
+            </h3>
+            <p className="text-sm text-gray-500">
+                Resumen de ingresos y servicios
+            </p>
 
             <div className="mb-6 flex justify-center">
                 <FilterTabs filter={filter} setFilter={setFilter} />
@@ -2500,7 +2531,6 @@ export default function Dashboard() {
                 <IncomeByService data={incomeByService} />
             </div>
 
-            <FloatingMenu />
         </div>
     );
 }
@@ -2688,6 +2718,7 @@ function App() {
 
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/tv" element={<PublicQueue />} />
         <Route path="/login" element={
           <PublicRoute>
             <Login />
@@ -2729,7 +2760,7 @@ export default App
 </file>
 
 <file path="src/pages/Home.tsx">
-import { useState} from "react";
+import { useState } from "react";
 
 import CurrentTicket from "../features/tickets/components/CurrentTicket";
 import TicketTable from "../features/tickets/components/TicketTable";
@@ -2741,9 +2772,8 @@ import { useAlert } from "../features/tickets/hooks/useAlert";
 
 import { useSettings } from "../features/settings/hooks/useSettings";
 
-import FloatingMenu from "../shared/components/FloatingMenu";
-
 import { useAuth } from "../features/auth/context/AuthContext";
+import { sanitizeName } from "../shared/utils/sanitize";
 
 export default function Home() {
     const [showForm, setShowForm] = useState(false);
@@ -2855,7 +2885,13 @@ export default function Home() {
                             services={services}
                             onSubmit={async (e) => {
                                 e.preventDefault();
-                                const res = await handleReserve(clientName, serviceId);
+                                const cleanName = sanitizeName(clientName);
+                                if (!cleanName) {
+                                    alert.warning("Ingresa un nombre válido");
+                                    return;
+                                }
+                                
+                                const res = await handleReserve(cleanName, serviceId);
                                 if (res.ok) {
                                     setClientName("");
                                     setServiceId("");
@@ -2904,7 +2940,6 @@ export default function Home() {
                     setSelectedTicketId(null);
                 }}
             />
-            <FloatingMenu />
         </div>
     );
 }

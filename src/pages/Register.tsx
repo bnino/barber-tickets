@@ -2,33 +2,40 @@ import { useState } from "react";
 import { registerUser } from "../features/auth/services/authService";
 import { useNavigate, Link } from "react-router-dom";
 
+import { sanitizeName, sanitizeEmail } from "../shared/utils/sanitize";
+
 export default function Register() {
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
+
+    const cleanName = sanitizeName(name);
+    const cleanEmail = sanitizeEmail(email);
 
     const navigate = useNavigate();
 
     const handleRegister = async (e: any) => {
         e.preventDefault();
 
-        if (!name || !email || !password) {
-            alert("Completa todos los campos");
+        if (!cleanName || !cleanEmail || !password) {
+            setError("Completa todos los campos");
             return;
         }
 
         if (password.length < 6) {
-            alert("La contraseña debe tener al menos 6 caracteres");
+            setError("La contraseña debe tener al menos 6 caracteres");
             return;
         }
 
         try {
+            setError("");
             setLoading(true);
-            await registerUser(email, password, name);
+            await registerUser(cleanEmail, password, cleanName);
             navigate("/");
         } catch (error) {
-            alert("Error al registrarse");
+            setError("Error al registrarse");
         } finally {
             setLoading(false);
         }
@@ -69,6 +76,10 @@ export default function Register() {
                         onChange={(e) => setPassword(e.target.value)}
                         className="border p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
                     />
+
+                    {error && (
+                        <p className="text-red-500 text-sm text-center">{error}</p>
+                    )}
 
                     <button
                         disabled={loading}

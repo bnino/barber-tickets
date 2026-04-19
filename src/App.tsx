@@ -26,6 +26,7 @@ function App() {
 
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/tv" element={<PublicQueue />} />
         <Route path="/login" element={
           <PublicRoute>
             <Login />
