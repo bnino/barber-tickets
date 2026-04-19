@@ -1,5 +1,5 @@
 import './App.css'
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, } from "react-router-dom";
 
 import Home from './pages/Home';
 import Dashboard from "./pages/Dashboard";
@@ -8,11 +8,10 @@ import Admin from "./pages/Admin";
 import Login from "./pages/Login";
 import Register from './pages/Register';
 
-import { AuthProvider } from "./features/auth/context/AuthContext";
 import ProtectedRoute from "./features/auth/components/ProtectedRoute";
+import PublicRoute from "./features/auth/components/PublicRoute";
 
-import Navbar from "./components/Navbar";
-
+import Navbar from "./shared/components/Navbar";
 
 function App() {
 
@@ -27,8 +26,16 @@ function App() {
 
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        <Route path="/login" element={
+          <PublicRoute>
+            <Login />
+          </PublicRoute>
+        } />
+        <Route path="/register" element={
+          <PublicRoute>
+            <Register />
+          </PublicRoute>
+        } />
         <Route path="/dashboard" element={
           <ProtectedRoute role="admin">
             <Dashboard />
