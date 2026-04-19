@@ -11,13 +11,15 @@ type Props = {
     onStart: (id: string) => void;
     hasActiveService: boolean;
     loadingId: string | null;
+    user: any;
 };
 
 function TicketTable({
     tickets,
     onStart,
     hasActiveService,
-    loadingId
+    loadingId,
+    user
 }: Props) {
     return (
         <div className="relative -mx-4 sm:mx-0 overflow-x-auto">
@@ -28,12 +30,14 @@ function TicketTable({
                         <th className="w-1/3 px-4 py-3 text-left text-sm font-semibold text-gray-600">Cliente</th>
                         <th className="w-1/6 px-4 py-3 text-left text-sm font-semibold text-gray-600 hidden sm:table-cell">Servicio</th>
                         <th className="w-1/3 px-4 py-3 text-left text-sm font-semibold text-gray-600 md:table-cell">Estado</th>
-                        <th className="w-40 px-4 py-3 text-center text-sm font-semibold text-gray-600">Acción</th>
+                        {user?.role === "admin" && (
+                            <th className="w-40 px-4 py-3 text-center text-sm font-semibold text-gray-600">Acción</th>
+                        )}
                     </tr>
                 </thead>
 
                 <tbody className="divide-y divide-gray-100">
-                    {tickets.map((t , i) => (
+                    {tickets.map((t, i) => (
                         <tr
                             key={t.id}
                             className="duration-300 hover:bg-gray-50 transition-colors">
@@ -62,35 +66,37 @@ function TicketTable({
                                 )}
                             </td>
 
-                            <td className="px-4 py-3 text-center">
-                                <div className="flex justify-center items-center">
-                                    <button
-                                        disabled={
-                                            loadingId === t.id ||
-                                            (hasActiveService && t.status !== TICKET_STATUS.IN_PROGRESS)
-                                        }
-                                        onClick={() => onStart(t.id)}
-                                        className={`
+                            {user?.role === "admin" && (
+                                <td className="px-4 py-3 text-center">
+                                    <div className="flex justify-center items-center">
+                                        <button
+                                            disabled={
+                                                loadingId === t.id ||
+                                                (hasActiveService && t.status !== TICKET_STATUS.IN_PROGRESS)
+                                            }
+                                            onClick={() => onStart(t.id)}
+                                            className={`
                                                         rounded-lg px-4 py-2 text-sm font-semibold transition
                                                         ${loadingId === t.id
-                                                ? "bg-gray-400 cursor-wait"
-                                                : t.status === TICKET_STATUS.IN_PROGRESS
-                                                    ? "bg-green-600 cursor-default"
-                                                    : hasActiveService
-                                                        ? "bg-gray-300 cursor-not-allowed"
-                                                        : "bg-blue-600 hover:bg-blue-700 active:scale-95"
-                                            }
+                                                    ? "bg-gray-400 cursor-wait"
+                                                    : t.status === TICKET_STATUS.IN_PROGRESS
+                                                        ? "bg-green-600 cursor-default"
+                                                        : hasActiveService
+                                                            ? "bg-gray-300 cursor-not-allowed"
+                                                            : "bg-blue-600 hover:bg-blue-700 active:scale-95"
+                                                }
                                                 `}
-                                    >
-                                        {loadingId === t.id
-                                            ? "Cargando..."
-                                            : t.status === TICKET_STATUS.IN_PROGRESS
-                                                ? "En Atención"
-                                                : "Iniciar Atención"}
-                                    </button>
+                                        >
+                                            {loadingId === t.id
+                                                ? "Cargando..."
+                                                : t.status === TICKET_STATUS.IN_PROGRESS
+                                                    ? "En Atención"
+                                                    : "Iniciar Atención"}
+                                        </button>
 
-                                </div>
-                            </td>
+                                    </div>
+                                </td>
+                            )}
                         </tr>
                     ))}
                 </tbody>

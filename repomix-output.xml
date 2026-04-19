@@ -1,0 +1,2913 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+.gitignore
+eslint.config.js
+index.html
+package.json
+public/vite.svg
+README.md
+src/App.css
+src/App.tsx
+src/assets/google.svg
+src/assets/react.svg
+src/features/auth/components/ProtectedRoute.tsx
+src/features/auth/components/PublicRoute.tsx
+src/features/auth/context/AuthContext.tsx
+src/features/auth/services/authService.ts
+src/features/dashboard/components/CustomBar.tsx
+src/features/dashboard/components/EmptyState.tsx
+src/features/dashboard/components/FilterTabs.tsx
+src/features/dashboard/components/IncomeByServiceChart.tsx
+src/features/dashboard/components/IncomeChart.tsx
+src/features/dashboard/components/ServicesChart.tsx
+src/features/dashboard/components/StatsCard.tsx
+src/features/dashboard/hooks/useDashboard.ts
+src/features/dashboard/services/dashboardService.ts
+src/features/settings/hooks/useSettings.ts
+src/features/settings/hooks/useSettingsForm.ts
+src/features/settings/services/settingsService.ts
+src/features/tickets/components/CurrentTicket.tsx
+src/features/tickets/components/FinishModal.tsx
+src/features/tickets/components/ReserveForm.tsx
+src/features/tickets/components/TicketTable.tsx
+src/features/tickets/constants/tickets.ts
+src/features/tickets/hooks/useAlert.ts
+src/features/tickets/hooks/useTickets.ts
+src/features/tickets/services/servicesService.ts
+src/features/tickets/services/ticketService.ts
+src/features/tickets/types/index.ts
+src/index.css
+src/main.tsx
+src/pages/Admin.tsx
+src/pages/Dashboard.tsx
+src/pages/Home.tsx
+src/pages/Login.tsx
+src/pages/PublicQueue.tsx
+src/pages/Register.tsx
+src/shared/components/ChartTooltip.tsx
+src/shared/components/FloatingMenu.tsx
+src/shared/components/Navbar.tsx
+src/shared/services/firebaseService.ts
+src/shared/types/apiResponse.ts
+src/shared/utils/chartColors.ts
+src/shared/utils/currency.ts
+src/shared/utils/errorHandler.ts
+src/shared/utils/format.ts
+tsconfig.app.json
+tsconfig.json
+tsconfig.node.json
+vite.config.ts
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="src/features/auth/components/PublicRoute.tsx">
+import { Navigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+
+type Props = {
+  children: any;
+};
+
+export default function PublicRoute({ children }: Props) {
+  const { user, loading } = useAuth();
+
+  if (loading) return <div className="p-6">Cargando...</div>;
+
+  if (user) return <Navigate to="/" />;
+
+  return children;
+}
+</file>
+
+<file path="src/shared/components/Navbar.tsx">
+import { Link } from "react-router-dom";
+import { signOut } from "firebase/auth";
+import { useState, useRef, useEffect } from "react";
+
+import { useAuth } from "../../features/auth/context/AuthContext";
+import { auth } from "../services/firebaseService";
+
+import { useSettings } from "../../features/settings/hooks/useSettings";
+
+export default function Navbar() {
+
+    const { user } = useAuth();
+    const { companyName } = useSettings();
+
+    const [open, setOpen] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    const handleLogout = async () => {
+        await signOut(auth);
+    };
+
+    const getInitial = () => {
+        if (user?.email) return user.email.charAt(0).toUpperCase();
+        return "U";
+    };
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (
+                dropdownRef.current &&
+                !dropdownRef.current.contains(event.target as Node)
+            ) {
+                setOpen(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    return (
+        <nav className="bg-white shadow px-6 py-3 flex justify-between items-center">
+
+            {/* Left */}
+            <div className="flex items-center gap-6">
+                <Link to="/" className="font-bold text-lg">
+                    💈 {companyName}
+                </Link>
+
+                <Link to="/" className="text-sm text-gray-600 hover:text-black">
+                    Turnos
+                </Link>
+
+                <Link to="/dashboard" className="text-sm text-gray-600 hover:text-black">
+                    Dashboard
+                </Link>
+
+                {user?.role === "admin" && (
+                    <Link to="/admin" className="text-sm text-gray-600 hover:text-black">
+                        Admin
+                    </Link>
+                )}
+            </div>
+
+            {/* Right */}
+            <div className="relative" ref={dropdownRef}>
+
+                {!user ? (
+                    <Link
+                        to="/login"
+                        className="text-sm font-semibold bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 "
+                    >
+                        Iniciar sesión
+                    </Link>
+                ) : (
+                    <>
+                        <button
+                            onClick={() => setOpen(!open)}
+                            className="cursor-pointer w-9 h-9 rounded-full bg-gray-900 text-white flex items-center justify-center font-bold hover:scale-105 transition"
+                        >
+                            {user.photoURL ? (
+                                <img
+                                    src={user.photoURL}
+                                    alt="avatar"
+                                    className="w-full h-full object-cover"
+                                />
+                            ) : (
+                                getInitial()
+                            )}
+                        </button>
+                        
+                        <div
+                            className={`absolute right-0 mt-2 w-52 bg-white border rounded-xl shadow-lg p-2 z-50 transition-all duration-200 origin-top-right
+                            ${open ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"}`}
+                        >
+
+                            <div className="px-3 py-2 border-b">
+                                <p className="text-sm font-semibold truncate">
+                                    {user.email}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                    {user.role}
+                                </p>
+                            </div>
+                            <Link
+                                to="/"
+                                className="block px-3 py-2 text-sm hover:bg-gray-100 rounded transition"
+                                onClick={() => setOpen(false)}
+                            >
+                                Turnos
+                            </Link>
+
+                            {user.role === "admin" && (
+                                <>
+                                    <Link
+                                        to="/dashboard"
+                                        className="block px-3 py-2 text-sm hover:bg-gray-100 rounded transition"
+                                        onClick={() => setOpen(false)}
+                                    >
+                                        Dashboard
+                                    </Link>
+                                    <Link
+                                        to="/admin"
+                                        className="block px-3 py-2 text-sm hover:bg-gray-100 rounded transition"
+                                        onClick={() => setOpen(false)}
+                                    >
+                                        Panel Admin
+                                    </Link>
+                                </>
+                            )}
+
+                            <button
+                                onClick={handleLogout}
+                                className="cursor-pointer w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-gray-100 rounded transition"
+                            >
+                                Cerrar sesión
+                            </button>
+                        </div>
+
+                    </>
+                )}
+            </div>
+        </nav>
+    );
+}
+</file>
+
+<file path=".gitignore">
+# Dependencias
+node_modules/
+.pnp
+.pnp.js
+
+# Build / output
+dist/
+dist-ssr/
+build/
+
+# Variables de entorno
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+.vscode/settings.json
+.idea/
+
+# Cache
+.cache/
+.parcel-cache/
+.eslintcache
+*.tsbuildinfo
+</file>
+
+<file path="eslint.config.js">
+import js from '@eslint/js'
+import globals from 'globals'
+import reactHooks from 'eslint-plugin-react-hooks'
+import reactRefresh from 'eslint-plugin-react-refresh'
+import tseslint from 'typescript-eslint'
+import { defineConfig, globalIgnores } from 'eslint/config'
+
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      js.configs.recommended,
+      tseslint.configs.recommended,
+      reactHooks.configs.flat.recommended,
+      reactRefresh.configs.vite,
+    ],
+    languageOptions: {
+      ecmaVersion: 2020,
+      globals: globals.browser,
+    },
+  },
+])
+</file>
+
+<file path="index.html">
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>barber-tickets</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+</file>
+
+<file path="public/vite.svg">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" class="iconify iconify--logos" width="31.88" height="32" preserveAspectRatio="xMidYMid meet" viewBox="0 0 256 257"><defs><linearGradient id="IconifyId1813088fe1fbc01fb466" x1="-.828%" x2="57.636%" y1="7.652%" y2="78.411%"><stop offset="0%" stop-color="#41D1FF"></stop><stop offset="100%" stop-color="#BD34FE"></stop></linearGradient><linearGradient id="IconifyId1813088fe1fbc01fb467" x1="43.376%" x2="50.316%" y1="2.242%" y2="89.03%"><stop offset="0%" stop-color="#FFEA83"></stop><stop offset="8.333%" stop-color="#FFDD35"></stop><stop offset="100%" stop-color="#FFA800"></stop></linearGradient></defs><path fill="url(#IconifyId1813088fe1fbc01fb466)" d="M255.153 37.938L134.897 252.976c-2.483 4.44-8.862 4.466-11.382.048L.875 37.958c-2.746-4.814 1.371-10.646 6.827-9.67l120.385 21.517a6.537 6.537 0 0 0 2.322-.004l117.867-21.483c5.438-.991 9.574 4.796 6.877 9.62Z"></path><path fill="url(#IconifyId1813088fe1fbc01fb467)" d="M185.432.063L96.44 17.501a3.268 3.268 0 0 0-2.634 3.014l-5.474 92.456a3.268 3.268 0 0 0 3.997 3.378l24.777-5.718c2.318-.535 4.413 1.507 3.936 3.838l-7.361 36.047c-.495 2.426 1.782 4.5 4.151 3.78l15.304-4.649c2.372-.72 4.652 1.36 4.15 3.788l-11.698 56.621c-.732 3.542 3.979 5.473 5.943 2.437l1.313-2.028l72.516-144.72c1.215-2.423-.88-5.186-3.54-4.672l-25.505 4.922c-2.396.462-4.435-1.77-3.759-4.114l16.646-57.705c.677-2.35-1.37-4.583-3.769-4.113Z"></path></svg>
+</file>
+
+<file path="README.md">
+# React + TypeScript + Vite
+
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+
+Currently, two official plugins are available:
+
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+
+## React Compiler
+
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+
+## Expanding the ESLint configuration
+
+If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+
+```js
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
+
+      // Remove tseslint.configs.recommended and replace with this
+      tseslint.configs.recommendedTypeChecked,
+      // Alternatively, use this for stricter rules
+      tseslint.configs.strictTypeChecked,
+      // Optionally, add this for stylistic rules
+      tseslint.configs.stylisticTypeChecked,
+
+      // Other configs...
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
+```
+
+You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+
+```js
+// eslint.config.js
+import reactX from 'eslint-plugin-react-x'
+import reactDom from 'eslint-plugin-react-dom'
+
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
+      // Enable lint rules for React
+      reactX.configs['recommended-typescript'],
+      // Enable lint rules for React DOM
+      reactDom.configs.recommended,
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
+```
+</file>
+
+<file path="src/App.css">
+@import "tailwindcss";
+</file>
+
+<file path="src/assets/google.svg">
+<?xml version="1.0" encoding="utf-8"?><!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
+<svg width="800px" height="800px" viewBox="-3 0 262 262" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid"><path d="M255.878 133.451c0-10.734-.871-18.567-2.756-26.69H130.55v48.448h71.947c-1.45 12.04-9.283 30.172-26.69 42.356l-.244 1.622 38.755 30.023 2.685.268c24.659-22.774 38.875-56.282 38.875-96.027" fill="#4285F4"/><path d="M130.55 261.1c35.248 0 64.839-11.605 86.453-31.622l-41.196-31.913c-11.024 7.688-25.82 13.055-45.257 13.055-34.523 0-63.824-22.773-74.269-54.25l-1.531.13-40.298 31.187-.527 1.465C35.393 231.798 79.49 261.1 130.55 261.1" fill="#34A853"/><path d="M56.281 156.37c-2.756-8.123-4.351-16.827-4.351-25.82 0-8.994 1.595-17.697 4.206-25.82l-.073-1.73L15.26 71.312l-1.335.635C5.077 89.644 0 109.517 0 130.55s5.077 40.905 13.925 58.602l42.356-32.782" fill="#FBBC05"/><path d="M130.55 50.479c24.514 0 41.05 10.589 50.479 19.438l36.844-35.974C195.245 12.91 165.798 0 130.55 0 79.49 0 35.393 29.301 13.925 71.947l42.211 32.783c10.59-31.477 39.891-54.251 74.414-54.251" fill="#EB4335"/></svg>
+</file>
+
+<file path="src/assets/react.svg">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" class="iconify iconify--logos" width="35.93" height="32" preserveAspectRatio="xMidYMid meet" viewBox="0 0 256 228"><path fill="#00D8FF" d="M210.483 73.824a171.49 171.49 0 0 0-8.24-2.597c.465-1.9.893-3.777 1.273-5.621c6.238-30.281 2.16-54.676-11.769-62.708c-13.355-7.7-35.196.329-57.254 19.526a171.23 171.23 0 0 0-6.375 5.848a155.866 155.866 0 0 0-4.241-3.917C100.759 3.829 77.587-4.822 63.673 3.233C50.33 10.957 46.379 33.89 51.995 62.588a170.974 170.974 0 0 0 1.892 8.48c-3.28.932-6.445 1.924-9.474 2.98C17.309 83.498 0 98.307 0 113.668c0 15.865 18.582 31.778 46.812 41.427a145.52 145.52 0 0 0 6.921 2.165a167.467 167.467 0 0 0-2.01 9.138c-5.354 28.2-1.173 50.591 12.134 58.266c13.744 7.926 36.812-.22 59.273-19.855a145.567 145.567 0 0 0 5.342-4.923a168.064 168.064 0 0 0 6.92 6.314c21.758 18.722 43.246 26.282 56.54 18.586c13.731-7.949 18.194-32.003 12.4-61.268a145.016 145.016 0 0 0-1.535-6.842c1.62-.48 3.21-.974 4.76-1.488c29.348-9.723 48.443-25.443 48.443-41.52c0-15.417-17.868-30.326-45.517-39.844Zm-6.365 70.984c-1.4.463-2.836.91-4.3 1.345c-3.24-10.257-7.612-21.163-12.963-32.432c5.106-11 9.31-21.767 12.459-31.957c2.619.758 5.16 1.557 7.61 2.4c23.69 8.156 38.14 20.213 38.14 29.504c0 9.896-15.606 22.743-40.946 31.14Zm-10.514 20.834c2.562 12.94 2.927 24.64 1.23 33.787c-1.524 8.219-4.59 13.698-8.382 15.893c-8.067 4.67-25.32-1.4-43.927-17.412a156.726 156.726 0 0 1-6.437-5.87c7.214-7.889 14.423-17.06 21.459-27.246c12.376-1.098 24.068-2.894 34.671-5.345a134.17 134.17 0 0 1 1.386 6.193ZM87.276 214.515c-7.882 2.783-14.16 2.863-17.955.675c-8.075-4.657-11.432-22.636-6.853-46.752a156.923 156.923 0 0 1 1.869-8.499c10.486 2.32 22.093 3.988 34.498 4.994c7.084 9.967 14.501 19.128 21.976 27.15a134.668 134.668 0 0 1-4.877 4.492c-9.933 8.682-19.886 14.842-28.658 17.94ZM50.35 144.747c-12.483-4.267-22.792-9.812-29.858-15.863c-6.35-5.437-9.555-10.836-9.555-15.216c0-9.322 13.897-21.212 37.076-29.293c2.813-.98 5.757-1.905 8.812-2.773c3.204 10.42 7.406 21.315 12.477 32.332c-5.137 11.18-9.399 22.249-12.634 32.792a134.718 134.718 0 0 1-6.318-1.979Zm12.378-84.26c-4.811-24.587-1.616-43.134 6.425-47.789c8.564-4.958 27.502 2.111 47.463 19.835a144.318 144.318 0 0 1 3.841 3.545c-7.438 7.987-14.787 17.08-21.808 26.988c-12.04 1.116-23.565 2.908-34.161 5.309a160.342 160.342 0 0 1-1.76-7.887Zm110.427 27.268a347.8 347.8 0 0 0-7.785-12.803c8.168 1.033 15.994 2.404 23.343 4.08c-2.206 7.072-4.956 14.465-8.193 22.045a381.151 381.151 0 0 0-7.365-13.322Zm-45.032-43.861c5.044 5.465 10.096 11.566 15.065 18.186a322.04 322.04 0 0 0-30.257-.006c4.974-6.559 10.069-12.652 15.192-18.18ZM82.802 87.83a323.167 323.167 0 0 0-7.227 13.238c-3.184-7.553-5.909-14.98-8.134-22.152c7.304-1.634 15.093-2.97 23.209-3.984a321.524 321.524 0 0 0-7.848 12.897Zm8.081 65.352c-8.385-.936-16.291-2.203-23.593-3.793c2.26-7.3 5.045-14.885 8.298-22.6a321.187 321.187 0 0 0 7.257 13.246c2.594 4.48 5.28 8.868 8.038 13.147Zm37.542 31.03c-5.184-5.592-10.354-11.779-15.403-18.433c4.902.192 9.899.29 14.978.29c5.218 0 10.376-.117 15.453-.343c-4.985 6.774-10.018 12.97-15.028 18.486Zm52.198-57.817c3.422 7.8 6.306 15.345 8.596 22.52c-7.422 1.694-15.436 3.058-23.88 4.071a382.417 382.417 0 0 0 7.859-13.026a347.403 347.403 0 0 0 7.425-13.565Zm-16.898 8.101a358.557 358.557 0 0 1-12.281 19.815a329.4 329.4 0 0 1-23.444.823c-7.967 0-15.716-.248-23.178-.732a310.202 310.202 0 0 1-12.513-19.846h.001a307.41 307.41 0 0 1-10.923-20.627a310.278 310.278 0 0 1 10.89-20.637l-.001.001a307.318 307.318 0 0 1 12.413-19.761c7.613-.576 15.42-.876 23.31-.876H128c7.926 0 15.743.303 23.354.883a329.357 329.357 0 0 1 12.335 19.695a358.489 358.489 0 0 1 11.036 20.54a329.472 329.472 0 0 1-11 20.722Zm22.56-122.124c8.572 4.944 11.906 24.881 6.52 51.026c-.344 1.668-.73 3.367-1.15 5.09c-10.622-2.452-22.155-4.275-34.23-5.408c-7.034-10.017-14.323-19.124-21.64-27.008a160.789 160.789 0 0 1 5.888-5.4c18.9-16.447 36.564-22.941 44.612-18.3ZM128 90.808c12.625 0 22.86 10.235 22.86 22.86s-10.235 22.86-22.86 22.86s-22.86-10.235-22.86-22.86s10.235-22.86 22.86-22.86Z"></path></svg>
+</file>
+
+<file path="src/features/auth/components/ProtectedRoute.tsx">
+import { Navigate } from "react-router-dom";
+  import { useAuth } from "../context/AuthContext";
+
+  type Props = {
+    children: any;
+    role?: string;
+  };
+
+  export default function ProtectedRoute({ children, role }: Props) {
+    const { user, loading } = useAuth();
+
+    if (loading) return <div className="p-6">Cargando...</div>;
+
+    if (!user) return <Navigate to="/login" />;
+
+    if (role && user.role !== role) {
+      return <Navigate to="/" />;
+    }
+
+    return children;
+  }
+</file>
+
+<file path="src/features/auth/context/AuthContext.tsx">
+import { createContext, useContext, useEffect, useState } from "react";
+import { subscribeToAuth, getUserRole } from "../services/authService";
+
+type User = {
+  uid: string;
+  email: string | null;
+  role: "admin" | "user";
+};
+
+const AuthContext = createContext<any>(null);
+
+export function AuthProvider({ children }: any) {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const unsub = subscribeToAuth(async (firebaseUser) => {
+      if (firebaseUser) {
+        const role = await getUserRole(firebaseUser.uid);
+
+        setUser({
+          uid: firebaseUser.uid,
+          email: firebaseUser.email,
+          role
+        });
+      } else {
+        setUser(null);
+      }
+
+      setLoading(false);
+    });
+
+    return () => unsub();
+  }, []);
+
+  return (
+    <AuthContext.Provider value={{ user, loading }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export const useAuth = () => useContext(AuthContext);
+</file>
+
+<file path="src/features/auth/services/authService.ts">
+import { auth, db } from "../../../shared/services/firebaseService";
+import {
+  signInWithPopup,
+  GoogleAuthProvider,
+  signInWithEmailAndPassword,
+  onAuthStateChanged,
+  signOut,
+  createUserWithEmailAndPassword
+} from "firebase/auth";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+
+const provider = new GoogleAuthProvider();
+
+export const loginWithGoogle = async () => {
+  const result = await signInWithPopup(auth, provider);
+  const user = result.user;
+
+  const ref = doc(db, "users", user.uid);
+  const snap = await getDoc(ref);
+
+  if (!snap.exists()) {
+    // crear usuario si no existe
+    await setDoc(ref, {
+      email: user.email,
+      name: user.displayName,
+      role: "user"
+    });
+  }
+
+  return user;
+};
+
+export const loginWithEmail = async (email: string, password: string) => {
+  const result = await signInWithEmailAndPassword(auth, email, password);
+  return result.user;
+};
+
+export const logout = () => signOut(auth);
+
+export const subscribeToAuth = (callback: (user: any) => void) => {
+  return onAuthStateChanged(auth, callback);
+};
+
+export const getUserRole = async (uid: string) => {
+  const ref = doc(db, "users", uid);
+  const snap = await getDoc(ref);
+
+  if (snap.exists()) {
+    return snap.data().role;
+  }
+
+  return "user";
+};
+
+export const registerUser = async (
+  email: string,
+  password: string,
+  name: string
+) => {
+
+  const res = await createUserWithEmailAndPassword(auth, email, password);
+
+  await setDoc(doc(db, "users", res.user.uid), {
+    email,
+    name,
+    role: "user"
+  });
+
+  return res.user;
+};
+</file>
+
+<file path="src/features/dashboard/components/CustomBar.tsx">
+import { Rectangle } from "recharts";
+import { getColorByIndex } from "../../../shared/utils/chartColors";
+
+export default function CustomBar(props: any) {
+    const { x, y, width, height, index } = props;
+
+    return (
+        <Rectangle
+            x={x}
+            y={y}
+            width={width}
+            height={height}
+            fill={getColorByIndex(index)}
+            radius={[6, 6, 0, 0]} // bordes redondeados arriba
+        />
+    );
+}
+</file>
+
+<file path="src/features/dashboard/components/EmptyState.tsx">
+import { memo } from "react";
+
+type Props = {
+  title: string;
+  description?: string;
+};
+
+function EmptyState({ title, description }: Props) {
+  return (
+    <div className="flex flex-col items-center justify-center h-64 text-center text-gray-400">
+      
+      <div className="text-4xl mb-2 opacity-60">
+        📊
+      </div>
+
+      <p className="text-sm font-semibold">
+        {title}
+      </p>
+
+      {description && (
+        <p className="text-xs mt-1">
+          {description}
+        </p>
+      )}
+    </div>
+  );
+}
+
+export default memo(EmptyState);
+</file>
+
+<file path="src/features/dashboard/components/FilterTabs.tsx">
+type Props = {
+    filter: string;
+    setFilter: (f: any) => void;
+};
+
+export default function FilterTabs({ filter, setFilter }: Props) {
+    const tabs = [
+        { label: "Hoy", value: "today" },
+        { label: "Esta Semana", value: "week" },
+        { label: "Ult. 7 Dias", value: "lastSevenDays" },
+        { label: "Este Mes", value: "month" }
+    ];
+
+    return (
+        <div className="inline-flex bg-white p-1 rounded-xl shadow-sm border">
+            {tabs.map(tab => (
+                <button
+                    key={tab.value}
+                    onClick={() => setFilter(tab.value)}
+                    className={`
+                        px-4 py-2 cursor-pointer rounded-lg text-sm font-semibold transition
+                        ${filter === tab.value
+                            ? "bg-gray-900 text-white shadow"
+                            : "text-gray-600 hover:bg-gray-100"}
+                    `}
+                >
+                    {tab.label}
+                </button>
+            ))}
+        </div>
+    );
+}
+</file>
+
+<file path="src/features/dashboard/components/StatsCard.tsx">
+type Props = {
+    title: string;
+    value: string;
+};
+
+export default function StatsCard({ title, value }: Props) {
+    return (
+        <div className="
+            bg-white rounded-2xl shadow-sm border
+            p-5 hover:shadow-md transition">
+            <p className="text-sm text-gray-500 mb-1">{title}</p>
+            <h3 className="text-2xl font-bold text-gray-900">{value}</h3>
+        </div>
+    );
+}
+</file>
+
+<file path="src/features/settings/hooks/useSettings.ts">
+import { useEffect, useState } from "react";
+import { subscribeToSettings } from "../services/settingsService";
+
+type Settings = {
+    company_name: string;
+    is_open: boolean;
+    working_days: any[];
+};
+
+export function useSettings() {
+    const [settings, setSettings] = useState<Settings | null>(null);
+
+    useEffect(() => {
+        const unsub = subscribeToSettings(setSettings);
+        return () => unsub();
+    }, []);
+
+    return {
+        settings,
+        companyName: settings?.company_name || "Mi Negocio",
+        isOpen: settings?.is_open ?? true,
+        workingDays: settings?.working_days || []
+    };
+}
+</file>
+
+<file path="src/features/settings/hooks/useSettingsForm.ts">
+import { useEffect, useState } from "react";
+import { useSettings } from "./useSettings";
+import { updateSettings } from "../services/settingsService";
+
+export function useSettingsForm() {
+    const { settings } = useSettings();
+
+    const [companyName, setCompanyName] = useState("");
+    const [isOpen, setIsOpen] = useState(true);
+    const [workingDays, setWorkingDays] = useState<string[]>([]);
+
+    useEffect(() => {
+        if (settings) {
+            setCompanyName(settings.company_name);
+            setIsOpen(settings.is_open);
+            setWorkingDays(settings.working_days || []);
+        }
+    }, [settings]);
+
+    const toggleDay = (day: string) => {
+        setWorkingDays(prev =>
+            prev.includes(day)
+                ? prev.filter(d => d !== day)
+                : [...prev, day]
+        );
+    };
+
+    const save = async () => {
+        await updateSettings({
+            company_name: companyName,
+            is_open: isOpen,
+            working_days: workingDays
+        });
+    };
+
+    return {
+        companyName,
+        setCompanyName,
+        isOpen,
+        setIsOpen,
+        workingDays,
+        toggleDay,
+        save
+    };
+}
+</file>
+
+<file path="src/features/settings/services/settingsService.ts">
+import { db } from "../../../shared/services/firebaseService";
+import { doc, onSnapshot, updateDoc } from "firebase/firestore";
+
+export const subscribeToSettings = (callback: (data: any) => void) => {
+    const ref = doc(db, "settings", "general");
+
+    const unsub = onSnapshot(ref, (snap) => {
+        if (snap.exists()) {
+            callback(snap.data());
+        }
+    });
+
+    return unsub;
+};
+
+export const updateSettings = async (data: any) => {
+    const ref = doc(db, "settings", "general");
+    await updateDoc(ref, data);
+};
+</file>
+
+<file path="src/features/tickets/components/ReserveForm.tsx">
+import type { Service } from "../types";
+
+import { memo } from "react";
+
+type Props = {
+    clientName: string;
+    setClientName: (value: string) => void;
+    serviceId: string;
+    setServiceId: (value: string) => void;
+    services: Service[];
+    onSubmit: (e: React.FormEvent) => void;
+};
+
+function ReserveForm({
+    clientName,
+    setClientName,
+    serviceId,
+    setServiceId,
+    services,
+    onSubmit
+}: Props) {
+    return (
+        <form className="mt-5 flex flex-col gap-3" onSubmit={onSubmit}>
+            <input
+                className="p-3 rounded-md border border-gray-300 text-base focus:outline-none focus:border-black"
+                placeholder="Tu nombre"
+                value={clientName}
+                onChange={(e) => setClientName(e.target.value)}
+            />
+
+            <select
+                className="p-3 rounded-md border border-gray-300 text-base focus:outline-none focus:border-black"
+                value={serviceId}
+                onChange={(e) => {
+                    setServiceId(e.target.value);
+                }}
+            >
+                <option value="">Selecciona un servicio</option>
+                {services.map((s) => (
+                    <option key={s.id} value={s.id}>
+                        {s.name} - ${s.price}
+                    </option>
+                ))}
+            </select>
+
+            <button className="mt-2.5 p-3 text-base font-bold bg-blue-500 text-white border-none rounded-md cursor-pointer transition-colors duration-150 ease-in-out hover:bg-blue-700" type="submit">
+                Confirmar turno
+            </button>
+        </form>
+    )
+}
+
+export default memo(ReserveForm);
+</file>
+
+<file path="src/features/tickets/constants/tickets.ts">
+export const TICKET_STATUS = {
+    IN_PROGRESS: "in_progress",
+    WAITING: "waiting",
+    DONE: "done",
+    NO_SHOW: "no_show"
+} as const;
+</file>
+
+<file path="src/features/tickets/hooks/useAlert.ts">
+import Swal, { type SweetAlertIcon } from "sweetalert2";
+
+type AlertOptions = {
+    title?: string;
+    text?: string;
+    timer?: number;
+};
+
+export function useAlert() {
+    const show = (icon: SweetAlertIcon, options: AlertOptions) => {
+        return Swal.fire({
+            icon,
+            title: options.title,
+            text: options.text,
+            timer: options.timer,
+            showConfirmButton: !options.timer
+        });
+    };
+
+    return {
+        success: (text: string, title = "Éxito") =>
+            show("success", { title, text, timer: 1500 }),
+
+        error: (text: string, title = "Error") =>
+            show("error", { title, text }),
+
+        warning: (text: string, title = "Atención") =>
+            show("warning", { title, text }),
+
+        confirm: (text: string, title = "¿Estás seguro?") =>
+            Swal.fire({
+                icon: "warning",
+                title,
+                text,
+                showCancelButton: true,
+                confirmButtonText: "Sí",
+                cancelButtonText: "Cancelar"
+            })
+    };
+}
+</file>
+
+<file path="src/index.css">
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.35s ease-out;
+}
+
+@keyframes pulseOnce {
+  0% {
+    box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.5);
+  }
+  100% {
+    box-shadow: 0 0 0 12px rgba(37, 99, 235, 0);
+  }
+}
+
+.animate-pulse-once {
+  animation: pulseOnce 0.6s ease-out;
+}
+</file>
+
+<file path="src/pages/Admin.tsx">
+import { useSettingsForm } from "../features/settings/hooks/useSettingsForm";
+import { useAlert } from "../features/tickets/hooks/useAlert";
+
+import FloatingMenu from "../shared/components/FloatingMenu";
+
+const DAYS = [
+    "lunes",
+    "martes",
+    "miércoles",
+    "jueves",
+    "viernes",
+    "sábado",
+    "domingo"
+];
+
+export default function Admin() {
+    const alert = useAlert();
+
+    const {
+        companyName,
+        setCompanyName,
+        isOpen,
+        setIsOpen,
+        workingDays,
+        toggleDay,
+        save
+    } = useSettingsForm();
+
+    return (
+        <div className="min-h-screen bg-gray-100 p-6">
+            <div className="max-w-xl mx-auto bg-white rounded-xl shadow p-6">
+
+                <h1 className="text-xl font-bold mb-6">
+                    ⚙️ Configuración del negocio
+                </h1>
+
+                <div className="mb-4">
+                    <label className="text-sm font-semibold">Nombre del negocio</label>
+                    <input
+                        value={companyName}
+                        onChange={(e) => setCompanyName(e.target.value)}
+                        className="w-full mt-1 p-2 border rounded"
+                    />
+                </div>
+
+                <div className="mb-4 flex items-center justify-between">
+                    <span className="text-sm font-semibold">Estado del negocio</span>
+                    <button
+                        onClick={() => setIsOpen(!isOpen)}
+                        className={`px-3 py-1 rounded text-white ${
+                            isOpen ? "bg-green-600" : "bg-red-600"
+                        }`}
+                    >
+                        {isOpen ? "Abierto" : "Cerrado"}
+                    </button>
+                </div>
+
+                <div className="mb-6">
+                    <p className="text-sm font-semibold mb-2">
+                        Días laborales
+                    </p>
+
+                    <div className="grid grid-cols-2 gap-2">
+                        {DAYS.map(day => (
+                            <label
+                                key={day}
+                                className="flex items-center gap-2 cursor-pointer"
+                            >
+                                <input
+                                    type="checkbox"
+                                    checked={workingDays.includes(day)}
+                                    onChange={() => toggleDay(day)}
+                                />
+                                {day}
+                            </label>
+                        ))}
+                    </div>
+                </div>
+
+                <button
+                    onClick={async () => {
+                        await save();
+                        alert.success("Configuración guardada");
+                    }}
+                    className="w-full bg-black text-white py-2 rounded"
+                >
+                    Guardar cambios
+                </button>
+
+            </div>
+            <FloatingMenu />
+        </div>
+    );
+}
+</file>
+
+<file path="src/pages/Login.tsx">
+import { useState } from "react";
+import { loginWithGoogle, loginWithEmail } from "../features/auth/services/authService";
+import { useNavigate, Link } from "react-router-dom";
+import googleIcon from "../assets/google.svg";
+
+export default function Login() {
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
+
+    const navigate = useNavigate();
+
+    const handleEmailLogin = async () => {
+        setError("");
+
+        if (!email || !password) {
+            setError("Completa todos los campos");
+            return;
+        }
+
+        try {
+            setLoading(true);
+            await loginWithEmail(email, password);
+            navigate("/");
+        } catch (err: any) {
+            setError("Correo o contraseña incorrectos");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleGoogleLogin = async () => {
+        try {
+            setLoading(true);
+            await loginWithGoogle();
+            navigate("/");
+        } catch (err) {
+            setError("Error al iniciar con Google");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
+            <div className="bg-white p-6 rounded-2xl shadow-lg w-full max-w-sm">
+
+                {/* Header */}
+                <div className="mb-6 text-center">
+                    <h1 className="text-2xl font-bold text-gray-800">
+                        Iniciar sesión
+                    </h1>
+                    <p className="text-sm text-gray-500">
+                        Accede a tu cuenta
+                    </p>
+                </div>
+
+                {/* Error */}
+                {error && (
+                    <div className="mb-4 text-sm text-red-600 bg-red-50 p-2 rounded">
+                        {error}
+                    </div>
+                )}
+
+                {/* Inputs */}
+                <input
+                    type="email"
+                    placeholder="Correo electrónico"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full mb-3 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                />
+
+                <input
+                    type="password"
+                    placeholder="Contraseña"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full mb-4 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                />
+
+                {/* Login email */}
+                <button
+                    onClick={handleEmailLogin}
+                    disabled={loading}
+                    className="w-full bg-black text-white py-2 rounded-lg font-semibold transition hover:bg-gray-800 disabled:opacity-50"
+                >
+                    {loading ? "Ingresando..." : "Ingresar"}
+                </button>
+
+                {/* Divider */}
+                <div className="my-4 flex items-center gap-2 text-sm text-gray-400">
+                    <div className="flex-1 h-px bg-gray-200"></div>
+                    <span>o</span>
+                    <div className="flex-1 h-px bg-gray-200"></div>
+                </div>
+
+                {/* Google */}
+                <button
+                    onClick={handleGoogleLogin}
+                    disabled={loading}
+                    className="w-full flex items-center justify-center gap-2 border py-2 rounded-lg hover:bg-gray-50 transition disabled:opacity-50"
+                >
+                    <img src={googleIcon} alt="Google" className="w-5 h-5" />
+                    <span className="font-medium">Continuar con Google</span>
+                </button>
+
+                {/* Register */}
+                <p className="mt-5 text-sm text-center text-gray-500">
+                    ¿No tienes cuenta?{" "}
+                    <Link to="/register" className="text-black font-semibold hover:underline">
+                        Regístrate
+                    </Link>
+                </p>
+            </div>
+        </div>
+    );
+}
+</file>
+
+<file path="src/pages/Register.tsx">
+import { useState } from "react";
+import { registerUser } from "../features/auth/services/authService";
+import { useNavigate, Link } from "react-router-dom";
+
+export default function Register() {
+    const [name, setName] = useState("");
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [loading, setLoading] = useState(false);
+
+    const navigate = useNavigate();
+
+    const handleRegister = async (e: any) => {
+        e.preventDefault();
+
+        if (!name || !email || !password) {
+            alert("Completa todos los campos");
+            return;
+        }
+
+        if (password.length < 6) {
+            alert("La contraseña debe tener al menos 6 caracteres");
+            return;
+        }
+
+        try {
+            setLoading(true);
+            await registerUser(email, password, name);
+            navigate("/");
+        } catch (error) {
+            alert("Error al registrarse");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
+            <div className="bg-white p-6 rounded-2xl shadow-lg w-full max-w-sm">
+
+                <h1 className="text-2xl font-bold mb-1 text-center">
+                    Crear cuenta
+                </h1>
+
+                <p className="text-sm text-gray-500 mb-4 text-center">
+                    Regístrate para gestionar tu barbería
+                </p>
+
+                <form onSubmit={handleRegister} className="flex flex-col gap-3">
+
+                    <input
+                        placeholder="Nombre"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        className="border p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                    />
+
+                    <input
+                        placeholder="Correo electrónico"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="border p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                    />
+
+                    <input
+                        type="password"
+                        placeholder="Contraseña"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="border p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                    />
+
+                    <button
+                        disabled={loading}
+                        className="bg-black text-white p-2 rounded-lg mt-2 hover:bg-gray-900 transition disabled:opacity-50"
+                    >
+                        {loading ? "Creando..." : "Registrarse"}
+                    </button>
+                </form>
+
+                <p className="text-xs text-center mt-4 text-gray-500">
+                    ¿Ya tienes cuenta?{" "}
+                    <Link to="/login" className="text-black font-semibold">
+                        Inicia sesión
+                    </Link>
+                </p>
+            </div>
+        </div>
+    );
+}
+</file>
+
+<file path="src/shared/components/ChartTooltip.tsx">
+type Props = {
+    active?: boolean;
+    payload?: any[];
+    label?: string;
+};
+
+export default function ChartTooltip({ active, payload, label }: Props) {
+    if (!active || !payload?.length) return null;
+
+    const data = payload[0].payload;
+
+    return (
+        <div className="bg-white p-3 rounded shadow text-sm border">
+            <p className="font-semibold">{label}</p>
+
+            {data.count !== undefined && (
+                <p>Servicios: {data.count}</p>
+            )}
+
+            {data.value !== undefined && (
+                <p>Ingresos: ${data.value.toLocaleString()}</p>
+            )}
+        </div>
+    );
+}
+</file>
+
+<file path="src/shared/services/firebaseService.ts">
+import { initializeApp } from "firebase/app";
+import { getFirestore } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAFeUyJd48Gi-w7WaXkmjgK6IKdOWDxZ8A",
+  authDomain: "barberia-tickets-prod.firebaseapp.com",
+  projectId: "barberia-tickets-prod",
+  storageBucket: "barberia-tickets-prod.firebasestorage.app",
+  messagingSenderId: "873650298006",
+  appId: "1:873650298006:web:7131b3a1d040e0d8d0b6b7",
+};
+
+const app = initializeApp(firebaseConfig);
+
+export const db = getFirestore(app);
+export const auth = getAuth(app);
+export default app;
+</file>
+
+<file path="src/shared/types/apiResponse.ts">
+export type ApiResponse =
+    | { ok: true }
+    | { ok: false; message: string };
+</file>
+
+<file path="src/shared/utils/chartColors.ts">
+const COLORS = [
+  "#6366F1", // Indigo suave
+  "#10B981", // Verde pastel
+  "#F59E0B", // Amarillo cálido suave
+  "#EF4444", // Rojo moderado
+  "#06B6D4", // Cyan suave
+  "#8B5CF6", // Violeta tenue
+  "#94A3B8", // Gris elegante
+];
+
+export function getColorByIndex(index: number) {
+    return COLORS[index % COLORS.length];
+}
+</file>
+
+<file path="src/shared/utils/currency.ts">
+export const formatCOP = (value: number) => {
+    if (!value) return "";
+    return new Intl.NumberFormat("es-CO").format(value);
+};
+</file>
+
+<file path="src/shared/utils/format.ts">
+export const capitalizeWords = (text?: string) => {
+    if (!text) return "";
+
+    return text
+        .toLowerCase()
+        .split(" ")
+        .filter(Boolean)
+        .map(word => word[0].toUpperCase() + word.slice(1))
+        .join(" ");
+};
+</file>
+
+<file path="tsconfig.app.json">
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+    "target": "ES2022",
+    "useDefineForClassFields": true,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "types": ["vite/client"],
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "react-jsx",
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true
+  },
+  "include": ["src"]
+}
+</file>
+
+<file path="tsconfig.json">
+{
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
+  ]
+}
+</file>
+
+<file path="tsconfig.node.json">
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
+    "target": "ES2023",
+    "lib": ["ES2023"],
+    "module": "ESNext",
+    "types": ["node"],
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true
+  },
+  "include": ["vite.config.ts"]
+}
+</file>
+
+<file path="vite.config.ts">
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
+
+// https://vite.dev/config/
+export default defineConfig({
+  plugins: [react(), 
+    tailwindcss()],
+})
+</file>
+
+<file path="src/features/dashboard/components/IncomeByServiceChart.tsx">
+import { getColorByIndex } from "../../../shared/utils/chartColors";
+
+import ChartTooltip from "../../../shared/components/ChartTooltip";
+
+import CustomBar from "./CustomBar";
+import {
+    BarChart,
+    Bar,
+    XAxis,
+    YAxis,
+    Tooltip,
+    ResponsiveContainer
+} from "recharts";
+import EmptyState from "./EmptyState";
+
+type Props = {
+    data: { name: string; value: number }[];
+};
+
+export default function IncomeByServiceChart({ data }: Props) {
+    return (
+        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+            <h3 className="text-sm font-semibold text-gray-600 mb-3">Ingresos por servicio</h3>
+
+            {data.length === 0 ? (
+                <EmptyState
+                    title="Sin ingresos por servicios registrados"
+                    description="Aquí verás cuánto has ganado por cada servicio cerrado"
+                />
+            ) : (
+
+            <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={data}>
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip content={<ChartTooltip />} />
+                    <Bar dataKey="value"
+                        shape={<CustomBar />} />
+                </BarChart>
+            </ResponsiveContainer>
+            )}
+
+            <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                {data.map((item, index) => (
+                    <div key={item.name} className="flex items-center gap-1">
+                        <span
+                            className="w-3 h-3 rounded-full"
+                            style={{ backgroundColor: getColorByIndex(index) }}
+                        />
+                        {item.name}
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}
+</file>
+
+<file path="src/features/dashboard/components/IncomeChart.tsx">
+import ChartTooltip from "../../../shared/components/ChartTooltip";
+
+import {
+    LineChart,
+    Line,
+    XAxis,
+    YAxis,
+    Tooltip,
+    ResponsiveContainer
+} from "recharts";
+import EmptyState from "./EmptyState";
+
+type Props = {
+    data: { label: string; value: number }[];
+};
+
+
+
+export default function IncomeChart({ data }: Props) {
+    return (
+        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+            <h3 className="text-sm font-semibold text-gray-600 mb-3">
+                Ingresos totales
+            </h3>
+            {data.length === 0 ? (
+            <EmptyState
+                title="Sin ingresos registrados"
+                description="Los ingresos aparecerán cuando finalices servicios"
+            />
+            ) : (
+            <ResponsiveContainer width="100%" height={250}>
+                <LineChart data={data}>
+                    <XAxis dataKey="label" />
+                    <YAxis />
+                    <Tooltip content={<ChartTooltip />} />
+                    <Line type="monotone" dataKey="value" strokeWidth={3} />
+                </LineChart>
+            </ResponsiveContainer>
+            )}
+        </div>
+    );
+}
+</file>
+
+<file path="src/features/dashboard/components/ServicesChart.tsx">
+import { getColorByIndex } from "../../../shared/utils/chartColors";
+
+import ChartTooltip from "../../../shared/components/ChartTooltip";
+
+import CustomBar from "./CustomBar";
+
+import {
+    BarChart,
+    Bar,
+    XAxis,
+    YAxis,
+    Tooltip,
+    ResponsiveContainer
+} from "recharts";
+import EmptyState from "./EmptyState";
+
+type Props = {
+    data: { name: string; count: number }[];
+};
+
+export default function ServicesChart({ data }: Props) {
+    return (
+        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+            <h3 className="text-sm font-semibold text-gray-600 mb-3">
+                Servicios mas prestados
+            </h3>
+
+            {data.length === 0 ? (
+                <EmptyState
+                    title="Sin servicios registrados"
+                    description="Aquí verás cuáles servicios son más solicitados"
+                />
+            ) : (
+
+                <ResponsiveContainer width="100%" height={250}>
+                    <BarChart data={data}>
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip content={<ChartTooltip />} />
+                        <Bar dataKey="count"
+                            shape={<CustomBar />} />
+
+                    </BarChart>
+                </ResponsiveContainer>
+            )}
+
+            <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                {data.map((item, index) => (
+                    <div key={item.name} className="flex items-center gap-1">
+                        <span
+                            className="w-3 h-3 rounded-full"
+                            style={{ backgroundColor: getColorByIndex(index) }}
+                        />
+                        {item.name}
+                    </div>
+                ))}
+            </div>
+        </div >
+    );
+}
+</file>
+
+<file path="src/features/dashboard/services/dashboardService.ts">
+import { db } from "../../../shared/services/firebaseService";
+import {
+    collection,
+    query,
+    where,
+    getDocs,
+    Timestamp
+} from "firebase/firestore";
+
+export const getRecentTickets = async () => {
+    const start = new Date();
+    start.setDate(start.getDate() - 30); // últimos 30 días
+
+    const q = query(
+        collection(db, "tickets"),
+        where("status", "==", "done"),
+        where("finished_at", ">=", Timestamp.fromDate(start))
+    );
+
+    const snap = await getDocs(q);
+
+    const tickets = snap.docs.map(doc => doc.data());
+    
+    return tickets;
+};
+</file>
+
+<file path="src/features/tickets/components/CurrentTicket.tsx">
+import { memo } from "react";
+
+type Props = {
+    id: string;
+    clientName: string;
+    serviceName: string;
+    onFinish: (id: string) => void;
+    onNoShow: (id: string) => void;
+    loading: boolean;
+    user: any;
+};
+function CurrentTicket({
+    id,
+    clientName,
+    serviceName,
+    onFinish,
+    onNoShow,
+    loading, 
+    user
+}: Props) {
+    return (
+        <div
+            className="relative mb-6 flex h-40 flex-col items-center justify-center rounded-2xl bg-linear-to-r from-emerald-800 to-green-500 text-white shadow-lg p-6">
+            <div className="text-center">
+                <h2 className="text-xl font-semibold uppercase tracking-wide opacity-100">
+                    ✂️ Atendiendo ahora
+                </h2>
+                <strong className="mt-2 block text-2xl font-bold">
+                    {clientName}
+                </strong>
+                <span className="text-sm font-semibold opacity-90">
+                    {serviceName || "Servicio"}
+                </span>
+            </div>
+
+            {user?.role === "admin" && (
+                <div className="absolute bottom-1 right-1 flex flex-col items-end gap-1">
+                    <button
+                        onClick={() => onFinish(id)}
+                        disabled={loading}
+                        className="mt-4 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 transition cursor-pointer disabled:bg-gray-400"
+                    >
+                        {loading ? "Cargando..." : "Finalizar"}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => onNoShow(id)}
+                        disabled={loading}
+                        className="text-xs font-bold text-shadow-sm/30 underline disabled:opacity-50 cursor-pointer"
+                    >
+                        {loading ? "Procesando..." : "No llegó / Cancelar"}
+                    </button>
+                </div>
+            )}
+        </div>
+    )
+}
+
+export default memo(CurrentTicket);
+</file>
+
+<file path="src/features/tickets/components/FinishModal.tsx">
+import { memo } from "react";
+
+import { formatCOP } from "../../../shared/utils/currency";
+
+type Props = {
+    isOpen: boolean;
+    price: number | null;
+    setPrice: (value: number | null) => void;
+    paymentMethod: "cash" | "nequi";
+    setPaymentMethod: (value: "cash" | "nequi") => void;
+    onClose: () => void;
+    onConfirm: () => void;
+};
+
+function FinishModal({
+    isOpen,
+    price,
+    setPrice,
+    paymentMethod,
+    setPaymentMethod,
+    onClose,
+    onConfirm
+}: Props) {
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl p-6 w-80 shadow-lg">
+
+                <h2 className="text-lg font-bold mb-4">
+                    Finalizar servicio
+                </h2>
+
+                <p className="text-sm font-semibold mb-2">Cancela</p>
+
+                <div className="flex items-center border rounded mb-3 px-2">
+                    <span className="text-gray-500 font-semibold">$</span>
+                    <input
+                        type="text"
+                        placeholder="0"
+                        value={price !== null ? formatCOP(price) : ""}
+                        onChange={(e) => {
+                            const raw = e.target.value.replace(/\D/g, ""); 
+                            setPrice(raw ? Number(raw) : null);
+                        }}
+                        className="w-full p-2 outline-none"
+                    />
+                </div>
+
+                <div className="mb-4">
+                    <p className="text-sm font-semibold mb-2">
+                        Método de pago
+                    </p>
+
+                    <div className="flex gap-4">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                                type="radio"
+                                name="payment"
+                                checked={paymentMethod === "cash"}
+                                onChange={() => setPaymentMethod("cash")}
+                            />
+                            💵 Efectivo
+                        </label>
+
+                        <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                                type="radio"
+                                name="payment"
+                                checked={paymentMethod === "nequi"}
+                                onChange={() => setPaymentMethod("nequi")}
+                            />
+                            📱 Nequi
+                        </label>
+                    </div>
+                </div>
+
+                <div className="flex justify-end gap-2">
+                    <button
+                        onClick={onClose}
+                        className="px-3 py-2 bg-gray-300 rounded"
+                    >
+                        Cancelar
+                    </button>
+
+                    <button
+                        onClick={onConfirm}
+                        className="px-3 py-2 bg-green-600 text-white rounded"
+                    >
+                        Confirmar
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+export default memo(FinishModal);
+</file>
+
+<file path="src/features/tickets/services/servicesService.ts">
+import { db } from "../../../shared/services/firebaseService";
+import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
+import type { Service } from "../types";
+
+export const subscribeToServices = (callback: (services: Service[]) => void) => {
+
+    const q = query(collection(db, "services"), orderBy("name", "asc"));
+
+    const unsub = onSnapshot(q, (snapshot) => {
+        const data: Service[] = snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...(doc.data() as Omit<Service, "id">),
+        }));
+        callback(data);
+    });
+    return unsub;
+};
+</file>
+
+<file path="src/features/tickets/types/index.ts">
+// 🟦 TIPOS
+export type TicketStatus =
+    | "waiting"
+    | "in_progress"
+    | "done"
+    | "no_show"
+    | "cancelled";
+
+export interface Ticket {
+    id: string;
+    client_name: string;
+    service_id: string;
+    status: TicketStatus;
+    date?: any;
+    price?: number;
+    payment_method?: "cash" | "nequi";
+    finished_at?: any;
+}
+
+export interface EnrichedTicket extends Ticket {
+    clientNameFormatted: string;
+    serviceName: string;
+}
+
+export interface Service {
+    id: string;
+    name: string;
+    price: number;
+}
+</file>
+
+<file path="src/main.tsx">
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import './index.css'
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App'
+import { AuthProvider } from './features/auth/context/AuthContext'
+import { BrowserRouter } from 'react-router-dom'
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <BrowserRouter>
+      <AuthProvider>
+        <App />
+      </AuthProvider>
+    </BrowserRouter>
+  </React.StrictMode>,
+)
+</file>
+
+<file path="src/shared/components/FloatingMenu.tsx">
+import { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+
+export default function FloatingMenu() {
+    const [open, setOpen] = useState(false);
+    const navigate = useNavigate();
+
+    const items = [
+        { label: "Home", icon: "🏠", path: "/" },
+        { label: "Admin", icon: "⚙️", path: "/admin" },
+        { label: "Dashboard", icon: "📊", path: "/dashboard" },
+        { label: "TV", icon: "📺", path: "/tv" }
+    ];
+
+    const location = useLocation();
+
+    if (location.pathname === "/tv") return null;
+
+    return (
+        <div className="fixed bottom-6 right-6 z-50">
+
+            <div className="relative flex flex-col items-end gap-2">
+
+                {items.map((item, i) => (
+                    <button
+                        key={item.path}
+                        onClick={() => {
+                            navigate(item.path);
+                            setOpen(false);
+                        }}
+                        className={`
+                            flex items-center gap-2 px-3 py-2 rounded-full shadow-lg
+                            bg-white text-gray-800 text-sm font-semibold
+                            transition-all duration-300
+                            ${open ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"}
+                        `}
+                        style={{
+                            transitionDelay: `${i * 50}ms`
+                        }}
+                    >
+                        {item.icon} {item.label}
+                    </button>
+                ))}
+
+                <button
+                    onClick={() => setOpen(prev => !prev)}
+                    className={`
+                        w-14 h-14 cursor-pointer rounded-full shadow-xl
+                        bg-gray-900 text-white text-2xl
+                        flex items-center justify-center
+                        transition-transform duration-300
+                        ${open ? "rotate-45" : ""}
+                    `}
+                >
+                    +
+                </button>
+            </div>
+        </div>
+    );
+}
+</file>
+
+<file path="src/shared/utils/errorHandler.ts">
+export const handleError = (error: unknown, message = "Ocurrió un error") => {
+    console.error(error);
+    return {
+        ok: false,
+        message
+    };
+};
+</file>
+
+<file path="src/features/dashboard/hooks/useDashboard.ts">
+import { useEffect, useState, useMemo } from "react";
+import { getRecentTickets } from "../services/dashboardService";
+
+import { subscribeToServices } from "../../tickets/services/servicesService";
+import type { Service } from "../../tickets/types";
+
+let cache: any = null;
+let lastFetch = 0;
+const CACHE_TIME = 1000 * 60 * 5; // 5 minutos
+
+type FilterType = "today" | "week" | "month" | "lastSevenDays";
+
+export function useDashboard() {
+    const [data, setData] = useState<any[]>([]);
+    const [filter, setFilter] = useState<FilterType>("today");
+    const [loading, setLoading] = useState(true);
+
+    const [services, setServices] = useState<Service[]>([]);
+
+    const servicesMap = useMemo(
+        () => Object.fromEntries(
+            services.map(s => [s.id, { name: s.name, price: s.price }])
+        ),
+        [services]
+    );
+
+    useEffect(() => {
+
+        if (cache && Date.now() - lastFetch < CACHE_TIME) {
+            setData(cache);
+            setLoading(false);
+            return;
+        }
+
+        const load = async () => {
+            const res = await getRecentTickets();
+            cache = res;
+            lastFetch = Date.now();
+            setData(res);
+            setLoading(false)
+        };
+
+        load();
+
+        const unsubServices = subscribeToServices(setServices);
+        return () => {
+            unsubServices();
+        };
+
+    }, []);
+
+    const filteredData = useMemo(() => {
+        const now = new Date();
+
+        return data.filter(t => {
+            if (!t.finished_at) return false;
+
+            const date = t.finished_at.toDate();
+
+            if (filter === "today") {
+                return date.toDateString() === now.toDateString();
+            }
+
+            if (filter === "lastSevenDays") {
+                const weekAgo = new Date();
+                weekAgo.setDate(now.getDate() - 7);
+                return date >= weekAgo;
+            }
+
+            if (filter === "week") {
+                const startOfWeek = new Date(now);
+                const day = startOfWeek.getDay();
+                const diff = day === 0 ? -6 : 1 - day;
+
+                startOfWeek.setDate(now.getDate() + diff);
+                startOfWeek.setHours(0, 0, 0, 0);
+
+                return date >= startOfWeek;
+            }
+
+            if (filter === "month") {
+                const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+                return date >= startOfMonth;
+            }
+
+            return true;
+        });
+    }, [data, filter]);
+
+    const stats = useMemo(() => {
+        const total = filteredData.reduce((acc, t) => acc + (t.price || 0), 0);
+        const count = filteredData.length;
+        const average = count ? total / count : 0;
+
+        return { 
+            total: Number(total) || 0, 
+            count: Number(count) || 0, 
+            average: Number(average) || 0 
+        };
+    }, [filteredData]);
+
+    const incomeChart = useMemo(() => {
+        const map: Record<string, number> = {};
+
+        filteredData.forEach(t => {
+            const date = t.finished_at.toDate();
+            let key = "";
+
+            if (filter === "today") {
+                key = `${date.getHours()}:00`;
+            }
+
+            if (filter === "week" || filter === "month") {
+                key = date.toLocaleDateString("es-CO", {
+                    day: "2-digit",
+                    month: "2-digit"
+                });
+            }
+
+            map[key] = (map[key] || 0) + (t.price || 0);
+        });
+
+        return Object.entries(map).map(([label, value]) => ({
+            label,
+            value
+        }));
+    }, [filteredData, filter]);
+
+    const servicesChart = useMemo(() => {
+        const map: Record<string, number> = {};
+
+        filteredData.forEach(t => {
+            const service = servicesMap[t.service_id]?.name || "Servicio";
+
+            map[service] = (map[service] || 0) + 1;
+        });
+
+        return Object.entries(map).map(([name, count]) => ({
+            name,
+            count
+        }));
+    }, [filteredData, servicesMap]);
+
+    const incomeByService = useMemo(() => {
+        const map: Record<string, number> = {};
+
+        filteredData.forEach(t => {
+            const service = servicesMap[t.service_id]?.name || "Servicio";
+            map[service] = (map[service] || 0) + (t.price || 0);
+        });
+
+        return Object.entries(map).map(([name, value]) => ({
+            name,
+            value
+        }));
+    }, [filteredData]);
+
+    return {
+        stats,
+        filter,
+        setFilter,
+        loading,
+        incomeChart,
+        servicesChart,
+        incomeByService
+    };
+}
+</file>
+
+<file path="src/features/tickets/components/TicketTable.tsx">
+import type { EnrichedTicket } from "../types";
+
+import { TICKET_STATUS } from "../constants/tickets";
+
+
+import { memo } from "react";
+
+type Props = {
+    tickets: EnrichedTicket[];
+    servicesMap: Record<string, { name: string; price: number }>;
+    onStart: (id: string) => void;
+    hasActiveService: boolean;
+    loadingId: string | null;
+    user: any;
+};
+
+function TicketTable({
+    tickets,
+    onStart,
+    hasActiveService,
+    loadingId,
+    user
+}: Props) {
+    return (
+        <div className="relative -mx-4 sm:mx-0 overflow-x-auto">
+            <table className="min-w-162.5 w-full divide-y divide-gray-200 bg-white table-fixed">
+                <thead className="bg-gray-100">
+                    <tr>
+                        <th className="pl-1 w-12">#</th>
+                        <th className="w-1/3 px-4 py-3 text-left text-sm font-semibold text-gray-600">Cliente</th>
+                        <th className="w-1/6 px-4 py-3 text-left text-sm font-semibold text-gray-600 hidden sm:table-cell">Servicio</th>
+                        <th className="w-1/3 px-4 py-3 text-left text-sm font-semibold text-gray-600 md:table-cell">Estado</th>
+                        {user?.role === "admin" && (
+                            <th className="w-40 px-4 py-3 text-center text-sm font-semibold text-gray-600">Acción</th>
+                        )}
+                    </tr>
+                </thead>
+
+                <tbody className="divide-y divide-gray-100">
+                    {tickets.map((t, i) => (
+                        <tr
+                            key={t.id}
+                            className="duration-300 hover:bg-gray-50 transition-colors">
+                            <td className="w-10 text-center text-sm text-gray-700">
+                                {i + 1}
+                            </td>
+                            <td className="px-4 py-3 font-medium text-gray-800 truncate">
+                                {t.clientNameFormatted}
+                            </td>
+                            <td className="px-4 py-3 text-gray-600 hidden sm:table-cell">
+                                {t.serviceName ?? "--"}</td>
+                            <td className="px-4 py-3 text-gray-600 sm:table-cell">
+                                {t.status === TICKET_STATUS.IN_PROGRESS ? (
+                                    <span
+                                        className="
+                                                inline-flex items-center gap-1
+                                                rounded-full bg-green-100 px-3 py-1
+                                                text-sm font-semibold text-green-700
+                                                animate-pulse
+                                                "
+                                    >
+                                        ✂️ Atendiendo
+                                    </span>
+                                ) : (
+                                    <span className="text-gray-500">🕒 Esperando</span>
+                                )}
+                            </td>
+
+                            {user?.role === "admin" && (
+                                <td className="px-4 py-3 text-center">
+                                    <div className="flex justify-center items-center">
+                                        <button
+                                            disabled={
+                                                loadingId === t.id ||
+                                                (hasActiveService && t.status !== TICKET_STATUS.IN_PROGRESS)
+                                            }
+                                            onClick={() => onStart(t.id)}
+                                            className={`
+                                                        rounded-lg px-4 py-2 text-sm font-semibold transition
+                                                        ${loadingId === t.id
+                                                    ? "bg-gray-400 cursor-wait"
+                                                    : t.status === TICKET_STATUS.IN_PROGRESS
+                                                        ? "bg-green-600 cursor-default"
+                                                        : hasActiveService
+                                                            ? "bg-gray-300 cursor-not-allowed"
+                                                            : "bg-blue-600 hover:bg-blue-700 active:scale-95"
+                                                }
+                                                `}
+                                        >
+                                            {loadingId === t.id
+                                                ? "Cargando..."
+                                                : t.status === TICKET_STATUS.IN_PROGRESS
+                                                    ? "En Atención"
+                                                    : "Iniciar Atención"}
+                                        </button>
+
+                                    </div>
+                                </td>
+                            )}
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
+    )
+}
+
+export default memo(TicketTable);
+</file>
+
+<file path="src/features/tickets/hooks/useTickets.ts">
+import { useEffect, useMemo, useState } from "react";
+
+import { capitalizeWords } from "../../../shared/utils/format";
+import type { ApiResponse } from "../../../shared/types/apiResponse";
+
+import { TICKET_STATUS } from "../constants/tickets";
+
+import {
+    subscribeToTickets,
+    addTicket,
+    startService,
+    finishService,
+    markNoShow
+} from "../services/ticketService";
+import { subscribeToServices } from "../services/servicesService";
+import type { Ticket, Service } from "../types";
+import { handleError } from "../../../shared/utils/errorHandler";
+
+export function useTickets() {
+    const [tickets, setTickets] = useState<Ticket[]>([]);
+    const [services, setServices] = useState<Service[]>([]);
+    const [loadingId, setLoadingId] = useState<string | null>(null);
+
+    const servicesMap = useMemo<Record<string, { name: string; price: number }>>(
+        () => Object.fromEntries(
+            services.map(s => [s.id, {name: s.name, price: s.price}])
+        ),
+        [services]
+    );
+
+    const enrichedTickets = useMemo(() => {
+        return tickets.map(t => ({
+            ...t,
+            clientNameFormatted: capitalizeWords(t.client_name),
+            serviceName: servicesMap[t.service_id]?.name ?? "—"
+        }));
+    }, [tickets, servicesMap]);
+
+    // Subscripciones
+    useEffect(() => {
+        const unsubTickets = subscribeToTickets(setTickets);
+        const unsubServices = subscribeToServices(setServices);
+
+        return () => {
+            unsubTickets();
+            unsubServices();
+        };
+    }, []);
+
+    // Derivados
+    const current = useMemo(
+        () => enrichedTickets.find(t => t.status === TICKET_STATUS.IN_PROGRESS),
+        [tickets]
+    );
+
+    const hasActiveService = Boolean(current);
+
+    // Acciones
+    const handleReserve = async (clientName: string, serviceId: string): Promise<ApiResponse> => {
+        if (!clientName || !serviceId) {
+            return { ok: false, message: "Campos incompletos" };
+        }
+
+        await addTicket(clientName, serviceId);
+        return { ok: true };
+    };
+
+    const startServiceHandler = async (ticketId: string): Promise<ApiResponse> => {
+        try {
+            setLoadingId(ticketId);
+            await startService(ticketId);
+            return { ok: true };
+        } catch (error) {
+            return handleError(error, "No se pudo iniciar el servicio");
+        } finally {
+            setLoadingId(null);
+        }
+    };
+
+    const handleFinish = async (
+        ticketId: string,
+        data: { price: number; payment_method: "cash" | "nequi" }
+    ): Promise<ApiResponse> => {
+        try {
+            setLoadingId(ticketId);
+            await finishService(ticketId, data);
+            return { ok: true };
+        } catch (error) {
+            return handleError(error, "No se pudo finalizar");
+        } finally {
+            setLoadingId(null);
+        }
+    };
+
+    const handleNoShow = async (ticketId: string): Promise<ApiResponse> => {
+        try {
+            setLoadingId(ticketId);
+            await markNoShow(ticketId);
+            return { ok: true };
+        } catch (error) {
+            return handleError(error, "No se pudo cancelar el turno");
+        } finally {
+            setLoadingId(null);
+        }
+    };
+
+    return {
+        tickets: enrichedTickets,
+        services,
+        current,
+        hasActiveService,
+        servicesMap,
+        loadingId,
+        handleReserve,
+        startServiceHandler,
+        handleFinish,
+        handleNoShow
+    };
+}
+</file>
+
+<file path="src/features/tickets/services/ticketService.ts">
+import { db } from "../../../shared/services/firebaseService";
+import {
+    collection,
+    onSnapshot,
+    query,
+    orderBy,
+    where,
+    addDoc,
+    updateDoc,
+    doc,
+    getDocs,
+    serverTimestamp,
+    limit,
+} from "firebase/firestore";
+import type { Ticket } from "../types";
+
+export const subscribeToTickets = (callback: (tickets: Ticket[]) => void) => {
+    const q = query(
+        collection(db, "tickets"),
+        where("status", "in", ["waiting", "in_progress"]),
+        orderBy("date", "asc")
+    );
+
+    const unsub = onSnapshot(q, (snapshot) => {
+        const data = snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+        })) as Ticket[];
+
+        callback(data);
+    });
+
+    return unsub;
+};
+
+export const addTicket = async (clientName: string, serviceId: string) => {
+    await addDoc(collection(db, "tickets"), {
+        client_name: clientName,
+        client_uid: null,
+        barber_uid: null,
+        service_id: serviceId,
+        status: "waiting",
+        date: serverTimestamp(),
+    });
+};
+
+export const startService = async (ticketId: string) => {
+    const q = query(
+        collection(db, "tickets"),
+        where("status", "==", "in_progress")
+    );
+
+    const snap = await getDocs(q);
+
+    // Finalizar el actual si existe
+    snap.forEach(async (docSnap) => {
+        await updateDoc(doc(db, "tickets", docSnap.id), {
+            status: "done",
+            time_end: serverTimestamp(),
+        });
+    });
+
+    // Marcar el nuevo como atendiendo
+    await updateDoc(doc(db, "tickets", ticketId), {
+        status: "in_progress",
+        time_start: serverTimestamp(),
+    });
+};
+
+export const finishService = async (
+    ticketId: string, 
+    data: {
+        price: number,
+        payment_method: "cash" | "nequi";
+    }
+) => {
+    await updateDoc(doc(db, "tickets", ticketId), {
+        status: "done",
+        price: data.price,
+        payment_method: data.payment_method,
+        finished_at: serverTimestamp(),
+    });
+
+    await startNextWaiting();
+};
+
+export const startNextWaiting = async () => {
+    const q = query(
+        collection(db, "tickets"),
+        where("status", "==", "waiting"),
+        orderBy("date", "asc"),
+        limit(1)
+    );
+
+    const snap = await getDocs(q);
+
+    if (!snap.empty) {
+        const next = snap.docs[0];
+        await updateDoc(doc(db, "tickets", next.id), {
+            status: "in_progress",
+            time_start: serverTimestamp(),
+        });
+    }
+};
+
+export const markNoShow = async (ticketId: string) => {
+    await updateDoc(doc(db, "tickets", ticketId), {
+        status: "no_show",
+        time_end: serverTimestamp(),
+    });
+
+    await startNextWaiting();
+};
+</file>
+
+<file path="src/pages/Dashboard.tsx">
+import StatsCard from "../features/dashboard/components/StatsCard";
+import FilterTabs from "../features/dashboard/components/FilterTabs";
+import IncomeChart from "../features/dashboard/components/IncomeChart";
+import ServicesChart from "../features/dashboard/components/ServicesChart";
+import IncomeByService from "../features/dashboard/components/IncomeByServiceChart";
+
+import { useSettings } from "../features/settings/hooks/useSettings";
+
+import { useDashboard } from "../features/dashboard/hooks/useDashboard";
+
+import { formatCOP } from "../shared/utils/currency";
+
+import FloatingMenu from "../shared/components/FloatingMenu";
+
+
+export default function Dashboard() {
+    const { stats, loading, filter, setFilter, incomeChart, servicesChart, incomeByService } = useDashboard();
+    const { companyName } = useSettings();
+
+    if (loading) return <p className="p-6">Cargando...</p>;
+
+    return (
+        <div className="min-h-screen bg-gray-100 p-6">
+
+            <div className="mb-6">
+                <div className="text-center">
+                    <h1 className="text-4xl font-bold text-gray-800">
+                        {companyName}
+                    </h1>
+                </div>
+            <div className="border-t border-gray-300 my-6" />
+                <h3 className="text-2xl font-bold text-gray-900">
+                    📊 Dashboard
+                </h3>
+                <p className="text-sm text-gray-500">
+                    Resumen de ingresos y servicios
+                </p>
+            </div>
+
+            <div className="mb-6 flex justify-center">
+                <FilterTabs filter={filter} setFilter={setFilter} />
+            </div>
+
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <StatsCard
+                    title="Total"
+                    value={`$ ${formatCOP(stats.total || 0)}`}
+                />
+                <StatsCard
+                    title="Servicios"
+                    value={String(stats.count)}
+                />
+                <StatsCard
+                    title="Promedio"
+                    value={`$ ${formatCOP(stats.average || 0)}`}
+                />
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6 mt-5">
+                <IncomeChart data={incomeChart} />
+                <ServicesChart data={servicesChart} />
+                <IncomeByService data={incomeByService} />
+            </div>
+
+            <FloatingMenu />
+        </div>
+    );
+}
+</file>
+
+<file path="src/pages/PublicQueue.tsx">
+import { useEffect, useMemo, useState } from "react";
+import { subscribeToTickets } from "../features/tickets/services/ticketService";
+import { subscribeToServices } from "../features/tickets/services/servicesService";
+import { Timestamp } from "firebase/firestore";
+import type { Ticket, Service } from "../features/tickets/types";
+
+export default function PublicQueue() {
+    const [tickets, setTickets] = useState<Ticket[]>([]);
+    const [services, setServices] = useState<Service[]>([]);
+    const [now, setNow] = useState(() => Date.now());
+
+    // Reloj para cronómetro
+    useEffect(() => {
+        document.body.style.background = "black";
+        const interval = setInterval(() => {
+            setNow(Date.now());
+        }, 1000);
+        return () => clearInterval(interval);
+    }, []);
+
+    // TURNOS EN TIEMPO REAL
+    useEffect(() => {
+        return subscribeToTickets(setTickets);
+    }, []);
+
+    // SERVICIOS
+    useEffect(() => {
+        return subscribeToServices(setServices);
+    }, []);
+
+    const servicesMap = useMemo(() => {
+        return services.reduce<Record<string, string>>((acc, s) => {
+            acc[s.id] = s.name;
+            return acc;
+        }, {});
+    }, [services]);
+
+    const current = tickets.find(t => t.status === "in_progress");
+    const next = tickets.filter(t => t.status === "waiting").slice(0, 5);
+
+    // Tiempo transcurrido
+    const getElapsed = (start?: Timestamp) => {
+        if (!start) return "";
+        const diff = Math.floor((now - start.toDate().getTime()) / 1000);
+        const min = Math.floor(diff / 60);
+        const sec = diff % 60;
+        return `${min}:${sec.toString().padStart(2, "0")}`;
+    };
+
+    return (
+        <div className="min-h-screen bg-gray-700 text-white flex flex-col p-10">
+
+            {/* ATENDIENDO */}
+            <div className="mb-10 text-center">
+                <h1 className="text-4xl font-bold tracking-widest text-gray-300 mb-4">
+                    ✂️ ATENDIENDO AHORA
+                </h1>
+
+                {current ? (
+                    <div className="bg-green-400 rounded-3xl p-10 shadow-xl">
+                        <h2 className="text-6xl font-extrabold">
+                            {current.client_name}
+                        </h2>
+                        <p className="text-2xl mt-2 opacity-90">
+                            {servicesMap[current.service_id]}
+                        </p>
+                        <p className="mt-4 text-xl">
+                            ⏱ {getElapsed((current as Ticket & { time_start?: Timestamp }).time_start)}
+                        </p>
+                        
+                    </div>
+                ) : (
+                    <p className="text-3xl text-gray-400">
+                        No hay nadie siendo atendido
+                    </p>
+                )}
+            </div>
+
+            {/* SIGUIENTES */}
+            <div>
+                <h2 className="text-3xl font-semibold mb-4 text-gray-300">
+                    🕒 SIGUIENTES EN COLA
+                </h2>
+
+                {next.length === 0 ? (
+                    <p className="text-2xl text-gray-400">
+                        No hay clientes en espera
+                    </p>
+                ) : (
+                    <ul className="space-y-4">
+                        {next.map((t, i) => (
+                            <li
+                                key={t.id}
+                                className="bg-gray-800 rounded-xl p-6 flex justify-between items-center text-2xl"
+                            >
+                                <span>
+                                    {i + 1}. {t.client_name}
+                                </span>
+                                <span className="opacity-80">
+                                    {servicesMap[t.service_id]}
+                                </span>
+                            </li>
+                        ))}
+                    </ul>
+                )}
+            </div>
+        </div>
+    );
+}
+</file>
+
+<file path="package.json">
+{
+  "name": "barber-tickets",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "firebase": "^12.6.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-router-dom": "^7.14.1",
+    "recharts": "^3.8.1",
+    "sweetalert2": "^11.26.24"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@tailwindcss/vite": "^4.1.18",
+    "@types/node": "^24.10.1",
+    "@types/react": "^19.2.5",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.1",
+    "autoprefixer": "^10.4.23",
+    "eslint": "^9.39.1",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.4.24",
+    "globals": "^16.5.0",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.18",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.46.4",
+    "vite": "^7.2.4"
+  }
+}
+</file>
+
+<file path="src/App.tsx">
+import './App.css'
+import { Routes, Route, } from "react-router-dom";
+
+import Home from './pages/Home';
+import Dashboard from "./pages/Dashboard";
+import PublicQueue from './pages/PublicQueue';
+import Admin from "./pages/Admin";
+import Login from "./pages/Login";
+import Register from './pages/Register';
+
+import ProtectedRoute from "./features/auth/components/ProtectedRoute";
+import PublicRoute from "./features/auth/components/PublicRoute";
+
+import Navbar from "./shared/components/Navbar";
+
+function App() {
+
+  const params = new URLSearchParams(window.location.search);
+  const isTV = params.has("tv");
+
+  if (isTV) return <PublicQueue />;
+
+  return (
+    <>
+      <Navbar />
+
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={
+          <PublicRoute>
+            <Login />
+          </PublicRoute>
+        } />
+        <Route path="/register" element={
+          <PublicRoute>
+            <Register />
+          </PublicRoute>
+        } />
+        <Route path="/dashboard" element={
+          <ProtectedRoute role="admin">
+            <Dashboard />
+          </ProtectedRoute>
+        } />
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute role="admin">
+              <Admin />
+            </ProtectedRoute>
+          } />
+      </Routes>
+    </>
+  )
+}
+
+/* function RedirectByQuery() {
+  const params = new URLSearchParams(window.location.search);
+
+  if (params.has("tv")) {
+    return <Navigate to="/tv" replace />;
+  }
+
+  return <Navigate to="/" replace />;
+} */
+
+export default App
+</file>
+
+<file path="src/pages/Home.tsx">
+import { useState} from "react";
+
+import CurrentTicket from "../features/tickets/components/CurrentTicket";
+import TicketTable from "../features/tickets/components/TicketTable";
+import ReserveForm from "../features/tickets/components/ReserveForm";
+import FinishModal from "../features/tickets/components/FinishModal";
+
+import { useTickets } from "../features/tickets/hooks/useTickets";
+import { useAlert } from "../features/tickets/hooks/useAlert";
+
+import { useSettings } from "../features/settings/hooks/useSettings";
+
+import FloatingMenu from "../shared/components/FloatingMenu";
+
+import { useAuth } from "../features/auth/context/AuthContext";
+
+export default function Home() {
+    const [showForm, setShowForm] = useState(false);
+    const [clientName, setClientName] = useState("");
+    const [serviceId, setServiceId] = useState("");
+    const alert = useAlert();
+
+    const [showFinishModal, setShowFinishModal] = useState(false);
+    const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
+    const [price, setPrice] = useState<number | null>(null);
+    const [paymentMethod, setPaymentMethod] = useState<"cash" | "nequi">("cash");
+
+    const { isOpen } = useSettings();
+
+    const {
+        tickets,
+        services,
+        current,
+        hasActiveService,
+        servicesMap,
+        loadingId,
+        handleReserve,
+        startServiceHandler,
+        handleFinish,
+        handleNoShow
+    } = useTickets();
+
+    const { user } = useAuth();
+
+    return (
+        <div className="min-h-screen bg-gray-100 px-4 py-6">
+            <div className="mx-auto w-full max-w-4xl rounded-2xl bg-white p-6 shadow-lg">
+                {current && (
+                    <CurrentTicket
+                        id={current.id}
+                        clientName={current.clientNameFormatted}
+                        serviceName={current.serviceName}
+                        user={user}
+
+                        onFinish={(id) => {
+
+                            const ticket = tickets.find(t => t.id === id);
+                            const service = services.find(s => s.id === ticket?.service_id);
+
+                            setPaymentMethod("cash");
+                            setSelectedTicketId(id);
+                            setPrice(service ? service.price : null);
+                            setShowFinishModal(true);
+                        }}
+
+                        onNoShow={async (id) => {
+                            const confirm = await alert.confirm(
+                                "Se marcará como cancelado y se llamará el siguiente turno"
+                            );
+
+                            if (!confirm.isConfirmed) return;
+
+                            const res = await handleNoShow(id);
+                            if (!res.ok) {
+                                alert.error(res?.message || "Error al cancelar");
+                            } else {
+                                alert.success("Turno cancelado");
+                            }
+                        }}
+                        loading={loadingId === current.id}
+                    />
+                )}
+
+                <h1 className="text-3xl font-bold mb-4">💈 Turnos Reservados</h1>
+                <div className="overflow-hidden rounded-xl border border-gray-200 shadow-sm mt-5">
+                    {tickets.length === 0 ?
+                        (
+                            <div className="mt-8 rounded-xl border border-dashed border-gray-300 p-6 text-center text-gray-500">
+                                No hay turnos reservados.
+                            </div>
+                        ) :
+                        (
+                            <TicketTable
+                                tickets={tickets}
+                                servicesMap={servicesMap}
+                                user={user}
+                                onStart={async (id) => {
+                                    const res = await startServiceHandler(id);
+
+                                    if (!res?.ok) {
+                                        alert.error(res?.message || "Error al iniciar el servicio");
+                                    }
+                                }}
+                                hasActiveService={hasActiveService}
+                                loadingId={loadingId}
+                            />
+
+                        )
+                    }
+
+                </div>
+                <div className="mt-7.5 p-5 rounded-xl bg-gray-100 shadow-lg text-center">
+
+                    <button disabled={!isOpen} className="px-6 py-3.5 text-base font-semibold rounded-lg border-none cursor-pointer bg-gray-900 text-white transition-transform duration-150 ease-in-out hover:bg-black hover:scale-105" onClick={() => setShowForm(prev => !prev)}>
+                        {isOpen ? "Reservar turno" : "Negocio cerrado"}
+                    </button>
+
+                    {showForm && (
+                        <ReserveForm
+                            clientName={clientName}
+                            setClientName={setClientName}
+                            serviceId={serviceId}
+                            setServiceId={setServiceId}
+                            services={services}
+                            onSubmit={async (e) => {
+                                e.preventDefault();
+                                const res = await handleReserve(clientName, serviceId);
+                                if (res.ok) {
+                                    setClientName("");
+                                    setServiceId("");
+                                    setShowForm(false);
+
+                                    alert.success("Turno reservado");
+                                } else {
+                                    alert.warning(res?.message);
+                                }
+                            }}
+                        />
+                    )}
+                </div>
+
+            </div>
+            <FinishModal
+                isOpen={showFinishModal}
+                price={price}
+                setPrice={setPrice}
+                paymentMethod={paymentMethod}
+                setPaymentMethod={setPaymentMethod}
+                onClose={() => setShowFinishModal(false)}
+                onConfirm={async () => {
+                    if (!selectedTicketId) return;
+
+                    if (!price || price <= 0) {
+                        alert.warning("Ingresa un precio válido");
+                        return;
+                    }
+
+                    const res = await handleFinish(selectedTicketId, {
+                        price: price,
+                        payment_method: paymentMethod
+                    });
+
+                    if (!res.ok) {
+                        alert.error(res.message);
+                        return;
+                    }
+
+                    alert.success("Servicio finalizado");
+
+                    setShowFinishModal(false);
+                    setPrice(null);
+                    setPaymentMethod("cash");
+                    setSelectedTicketId(null);
+                }}
+            />
+            <FloatingMenu />
+        </div>
+    );
+}
+</file>
+
+</files>
