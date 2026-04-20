@@ -25,9 +25,8 @@ function App() {
 
   return (
     <>
-      {!isTV}
-      <Navbar />
-
+      {!isTV && <Navbar />}
+      
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/tv" element={<PublicQueue />} />
