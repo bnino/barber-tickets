@@ -97,7 +97,7 @@ export function useDashboard() {
             count: Number(count) || 0,
             average: Number(average) || 0
         };
-    }, [filteredData]);
+    }, [filteredData, servicesMap]);
 
     const incomeChart = useMemo(() => {
         const map: Record<string, number> = {};
@@ -153,7 +153,7 @@ export function useDashboard() {
             name,
             value
         }));
-    }, [filteredData]);
+    }, [filteredData, servicesMap]);
 
     const paymentStats = useMemo(() => {
         let cashTotal = 0;

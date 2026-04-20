@@ -16,7 +16,7 @@ export default function Dashboard() {
     if (loading) return <p className="p-6">Cargando...</p>;
 
     return (
-        <div className="min-h-screen bg-gray-100 p-6">
+        <div className="min-h-screen bg-gray-100 p-6 items-stretch">
             <h3 className="text-2xl font-bold text-gray-900">
                 📊 Dashboard
             </h3>

@@ -47,19 +47,6 @@ export default function Navbar() {
                     💈 {companyName}
                 </Link>
 
-                <Link to="/" className="text-sm text-gray-600 hover:text-black">
-                    Turnos
-                </Link>
-
-                <Link to="/dashboard" className="text-sm text-gray-600 hover:text-black">
-                    Dashboard
-                </Link>
-
-                {user?.role === "admin" && (
-                    <Link to="/admin" className="text-sm text-gray-600 hover:text-black">
-                        Admin
-                    </Link>
-                )}
             </div>
 
             {/* Right */}

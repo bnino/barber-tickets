@@ -46,12 +46,12 @@ export default function PaymentsMethodChart({ data }: Props) {
     }
 
     return (
-        <div className="bg-white rounded-xl shadow p-4">
+        <div className="bg-white rounded-xl shadow p-4 w-full min-h-75">
             <h3 className="text-sm font-semibold mb-3">
                 Métodos de pago
             </h3>
 
-            <div className="h-64">
+            <div className="h-64" >
                 <ResponsiveContainer>
                     <PieChart>
                         <Pie

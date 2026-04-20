@@ -34,7 +34,7 @@ export default function ServiceList() {
                         className="flex justify-between items-center p-3 border-b shadow-lg rounded"
                     >
                         <div>
-                            <p className="font-semibold">{s.name}</p>
+                            <p className="font-semibold truncate">{s.name}</p>
                             <p className="text-sm text-gray-500">$ {formatCOP(s.price)}</p>
                         </div>
 

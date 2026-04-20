@@ -4,6 +4,8 @@ import { getColorByIndex } from "../../../shared/utils/chartColors";
 export default function CustomBar(props: any) {
     const { x, y, width, height, index } = props;
 
+    if (width <= 0 || height <= 0) return null;
+
     return (
         <Rectangle
             x={x}

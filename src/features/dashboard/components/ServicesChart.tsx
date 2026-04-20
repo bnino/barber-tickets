@@ -20,7 +20,7 @@ type Props = {
 
 export default function ServicesChart({ data }: Props) {
     return (
-        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 w-full min-h-75">
             <h3 className="text-sm font-semibold text-gray-600 mb-3">
                 Servicios mas prestados
             </h3>
@@ -31,17 +31,18 @@ export default function ServicesChart({ data }: Props) {
                     description="Aquí verás cuáles servicios son más solicitados"
                 />
             ) : (
+                <div className="h-64" >
+                    <ResponsiveContainer width="100%" height={250}>
+                        <BarChart data={data}>
+                            <XAxis dataKey="name" />
+                            <YAxis />
+                            <Tooltip content={<ChartTooltip />} />
+                            <Bar dataKey="count"
+                                shape={<CustomBar />} />
 
-                <ResponsiveContainer width="100%" height={250}>
-                    <BarChart data={data}>
-                        <XAxis dataKey="name" />
-                        <YAxis />
-                        <Tooltip content={<ChartTooltip />} />
-                        <Bar dataKey="count"
-                            shape={<CustomBar />} />
-
-                    </BarChart>
-                </ResponsiveContainer>
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
             )}
 
             <div className="mt-3 flex flex-wrap gap-2 text-xs">
