@@ -1,6 +1,8 @@
 import { useSettingsForm } from "../features/settings/hooks/useSettingsForm";
 import { useAlert } from "../features/tickets/hooks/useAlert";
 
+import UsersTable from "../features/users/components/UsersTable";
+
 import ServiceList from "../features/services/components/ServiceList";
 
 const DAYS = [
@@ -90,6 +92,12 @@ export default function Admin() {
             <div className="max-w-3xl mt-6 mx-auto bg-white rounded-2xl shadow-xl space-y-6">
                 <div className="bg-white rounded-xl shadow p-6">
                     <ServiceList />
+                </div>
+            </div>
+
+            <div className="max-w-3xl mt-6 mx-auto bg-white rounded-2xl shadow-xl space-y-6">
+                <div className="bg-white rounded-xl shadow p-6">
+                    <UsersTable />
                 </div>
             </div>
 

@@ -65,7 +65,7 @@ export default function PublicQueue() {
 
             {/* Header */}
             <div className="flex justify-between items-center mb-10">
-                <h1 className="text-4xl font-bold">{companyName}</h1>
+                <h1 className="text-4xl font-bold">💈 {companyName}</h1>
 
                 <span className={`text-xl font-semibold ${isOpen ? "text-green-400" : "text-red-400"}`}>
                     {isOpen ? "🟢 Abierto" : "🔴 Cerrado"}

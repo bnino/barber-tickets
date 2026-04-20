@@ -1,5 +1,5 @@
 import './App.css'
-import { Routes, Route, } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 
 import Home from './pages/Home';
 import Dashboard from "./pages/Dashboard";
@@ -15,13 +15,17 @@ import Navbar from "./shared/components/Navbar";
 
 function App() {
 
-  const params = new URLSearchParams(window.location.search);
-  const isTV = params.has("tv");
+  const location = useLocation();
+
+  const isTV =
+    location.pathname === "/tv" ||
+    new URLSearchParams(location.search).has("tv");
 
   if (isTV) return <PublicQueue />;
 
   return (
     <>
+      {!isTV}
       <Navbar />
 
       <Routes>
