@@ -1,4 +1,6 @@
 import { db } from "../../../shared/services/firebaseService";
+import type { Ticket } from "../types";
+
 import {
     collection,
     onSnapshot,
@@ -12,7 +14,6 @@ import {
     serverTimestamp,
     limit,
 } from "firebase/firestore";
-import type { Ticket } from "../types";
 
 export const subscribeToTickets = (callback: (tickets: Ticket[]) => void) => {
     const q = query(

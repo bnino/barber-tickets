@@ -45,6 +45,7 @@ The content is organized as follows:
 eslint.config.js
 index.html
 package.json
+public/notification.mp3
 public/vite.svg
 README.md
 src/App.css
@@ -60,10 +61,16 @@ src/features/dashboard/components/EmptyState.tsx
 src/features/dashboard/components/FilterTabs.tsx
 src/features/dashboard/components/IncomeByServiceChart.tsx
 src/features/dashboard/components/IncomeChart.tsx
+src/features/dashboard/components/PaymentsMethodChart.tsx
 src/features/dashboard/components/ServicesChart.tsx
 src/features/dashboard/components/StatsCard.tsx
 src/features/dashboard/hooks/useDashboard.ts
 src/features/dashboard/services/dashboardService.ts
+src/features/services/components/ServiceForm.tsx
+src/features/services/components/ServiceList.tsx
+src/features/services/components/ServiceModal.tsx
+src/features/services/hooks/useServices.ts
+src/features/services/services/servicesAdminService.ts
 src/features/settings/hooks/useSettings.ts
 src/features/settings/hooks/useSettingsForm.ts
 src/features/settings/services/settingsService.ts
@@ -77,6 +84,8 @@ src/features/tickets/hooks/useTickets.ts
 src/features/tickets/services/servicesService.ts
 src/features/tickets/services/ticketService.ts
 src/features/tickets/types/index.ts
+src/features/users/components/UsersTable.tsx
+src/features/users/hooks/useUsers.ts
 src/index.css
 src/main.tsx
 src/pages/Admin.tsx
@@ -111,23 +120,6 @@ VITE_FIREBASE_PROJECT_ID=
 VITE_FIREBASE_STORAGE_BUCKET=
 VITE_FIREBASE_MESSAGING_SENDER_ID=
 VITE_FIREBASE_APP_ID=
-</file>
-
-<file path="src/shared/utils/sanitize.ts">
-export const sanitizeText = (text: string) => {
-  return text
-    .trim() // quita espacios al inicio y final
-    .replace(/\s+/g, " "); // evita espacios dobles
-};
-
-export const sanitizeName = (name: string) => {
-  return sanitizeText(name)
-    .replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, ""); // solo letras
-};
-
-export const sanitizeEmail = (email: string) => {
-  return sanitizeText(email).toLowerCase();
-};
 </file>
 
 <file path=".gitignore">
@@ -393,104 +385,6 @@ export function AuthProvider({ children }: any) {
 export const useAuth = () => useContext(AuthContext);
 </file>
 
-<file path="src/features/auth/services/authService.ts">
-import { auth, db } from "../../../shared/services/firebaseService";
-import {
-  signInWithPopup,
-  GoogleAuthProvider,
-  signInWithEmailAndPassword,
-  onAuthStateChanged,
-  signOut,
-  createUserWithEmailAndPassword,
-  updateProfile
-} from "firebase/auth";
-import { doc, getDoc, setDoc } from "firebase/firestore";
-
-const provider = new GoogleAuthProvider();
-
-export const loginWithGoogle = async () => {
-  const result = await signInWithPopup(auth, provider);
-  const user = result.user;
-
-  const ref = doc(db, "users", user.uid);
-  const snap = await getDoc(ref);
-
-  if (!snap.exists()) {
-    // crear usuario si no existe
-    await setDoc(ref, {
-      email: user.email,
-      name: user.displayName,
-      role: "user"
-    });
-  }
-
-  return user;
-};
-
-export const loginWithEmail = async (email: string, password: string) => {
-  const result = await signInWithEmailAndPassword(auth, email, password);
-  return result.user;
-};
-
-export const logout = () => signOut(auth);
-
-export const subscribeToAuth = (callback: (user: any) => void) => {
-  return onAuthStateChanged(auth, callback);
-};
-
-export const getUserRole = async (uid: string) => {
-  const ref = doc(db, "users", uid);
-  const snap = await getDoc(ref);
-
-  if (snap.exists()) {
-    return snap.data().role;
-  }
-
-  return "user";
-};
-
-export const registerUser = async (
-  email: string,
-  password: string,
-  name: string
-) => {
-
-  const res = await createUserWithEmailAndPassword(auth, email, password);
-
-  await setDoc(doc(db, "users", res.user.uid), {
-    email,
-    name,
-    role: "user"
-  });
-
-  await updateProfile(res.user, {
-    displayName: name
-});
-
-  return res.user;
-};
-</file>
-
-<file path="src/features/dashboard/components/CustomBar.tsx">
-import { Rectangle } from "recharts";
-import { getColorByIndex } from "../../../shared/utils/chartColors";
-
-export default function CustomBar(props: any) {
-    const { x, y, width, height, index } = props;
-
-    return (
-        <Rectangle
-            x={x}
-            y={y}
-            width={width}
-            height={height}
-            fill={getColorByIndex(index)}
-            radius={[6, 6, 0, 0]} // bordes redondeados arriba
-        />
-    );
-}
-</file>
-
 <file path="src/features/dashboard/components/EmptyState.tsx">
 import { memo } from "react";
 
@@ -576,6 +470,283 @@ export default function StatsCard({ title, value }: Props) {
 }
 </file>
 
+<file path="src/features/services/components/ServiceForm.tsx">
+import { useState, useEffect } from "react";
+
+type Props = {
+    initialData?: { name: string; price: number };
+    onSubmit: (data: { name: string; price: number }) => void;
+    onCancel: () => void;
+};
+
+export default function ServiceForm({ initialData, onSubmit, onCancel }: Props) {
+    const [name, setName] = useState("");
+    const [price, setPrice] = useState<number | null>(null);
+
+    useEffect(() => {
+        if (initialData) {
+            setName(initialData.name);
+            setPrice(initialData.price);
+        }
+    }, [initialData]);
+
+    return (
+        <div className="bg-white p-4 rounded-xl shadow mb-4">
+
+            <h2 className="font-bold mb-3">
+                {initialData ? "Editar servicio" : "Nuevo servicio"}
+            </h2>
+
+            <div className="flex flex-col gap-3">
+
+                <input
+                    placeholder="Nombre del servicio"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="border p-2 rounded"
+                />
+
+                <input
+                    type="number"
+                    placeholder="Precio"
+                    value={price ?? ""}
+                    onChange={(e) => setPrice(Number(e.target.value))}
+                    className="border p-2 rounded"
+                />
+
+                <div className="flex justify-end gap-2">
+                    <button
+                        onClick={onCancel}
+                        className="cursor-pointer px-3 py-2 bg-gray-300 rounded"
+                    >
+                        Cancelar
+                    </button>
+
+                    <button
+                        onClick={() => {
+                            if (!name || !price) return;
+                            onSubmit({ name, price });
+                        }}
+                        className="cursor-pointer px-3 py-2 bg-black text-white rounded"
+                    >
+                        Guardar
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    );
+}
+</file>
+
+<file path="src/features/services/components/ServiceModal.tsx">
+import { memo, useEffect, useState } from "react";
+import { useAlert } from "../../tickets/hooks/useAlert";
+
+type Props = {
+    isOpen: boolean;
+    onClose: () => void;
+    onSubmit: (data: { name: string; price: number }) => Promise<void>;
+    initialData?: { name: string; price: number } | null;
+    isEditing?: boolean;
+};
+
+function ServiceModal({
+    isOpen,
+    onClose,
+    onSubmit,
+    initialData,
+    isEditing
+}: Props) {
+    const alert = useAlert();
+
+    const [name, setName] = useState("");
+    const [price, setPrice] = useState("");
+
+    useEffect(() => {
+        if (initialData) {
+            setName(initialData.name);
+            setPrice(String(initialData.price));
+        } else {
+            setName("");
+            setPrice("");
+        }
+    }, [initialData]);
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl p-6 w-80 shadow-lg">
+
+                <h2 className="text-lg font-bold mb-4">
+                    {isEditing ? "Editar servicio" : "Nuevo servicio"}
+                </h2>
+
+                <input
+                    placeholder="Nombre del servicio"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="w-full mb-3 p-2 border rounded"
+                />
+
+                <input
+                    type="number"
+                    placeholder="Precio"
+                    value={price}
+                    onChange={(e) => setPrice(e.target.value)}
+                    className="w-full mb-4 p-2 border rounded"
+                />
+
+                <div className="flex justify-end gap-2">
+                    <button
+                        onClick={onClose}
+                        className="px-3 py-2 bg-gray-300 rounded"
+                    >
+                        Cancelar
+                    </button>
+
+                    <button
+                        onClick={async () => {
+                            if (!name || !price) {
+                                alert.warning("Campos incompletos");
+                                return;
+                            }
+
+                            if (Number(price) <= 0) {
+                                alert.warning("Precio inválido");
+                                return;
+                            }
+
+                            // Confirmación si está editando
+                            if (isEditing) {
+                                const confirm = await alert.confirm(
+                                    "¿Guardar cambios en el servicio?"
+                                );
+
+                                if (!confirm.isConfirmed) return;
+                            }
+
+                            await onSubmit({
+                                name,
+                                price: Number(price)
+                            });
+
+                            alert.success(
+                                isEditing
+                                    ? "Servicio actualizado"
+                                    : "Servicio creado"
+                            );
+
+                            onClose();
+                        }}
+                        className="px-3 py-2 bg-black text-white rounded"
+                    >
+                        Guardar
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+export default memo(ServiceModal);
+</file>
+
+<file path="src/features/services/hooks/useServices.ts">
+import { useEffect, useState } from "react";
+import {
+    collection,
+    onSnapshot,
+    addDoc,
+    updateDoc,
+    deleteDoc,
+    doc
+} from "firebase/firestore";
+import { db } from "../../../shared/services/firebaseService";
+
+type Service = {
+    id: string;
+    name: string;
+    price: number;
+};
+
+export function useServices() {
+    const [services, setServices] = useState<Service[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const unsub = onSnapshot(collection(db, "services"), (snapshot) => {
+            const data = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            })) as Service[];
+
+            setServices(data);
+            setLoading(false);
+        });
+
+        return () => unsub();
+    }, []);
+
+    const createService = async (data: { name: string; price: number }) => {
+        if (!data.name || data.price <= 0) {
+            throw new Error("Datos inválidos");
+        }
+        await addDoc(collection(db, "services"), {
+            name: data.name,
+            price: data.price
+        });
+    };
+
+    const updateService = async (
+        id: string,
+        data: { name: string; price: number }
+    ) => {
+        await updateDoc(doc(db, "services", id), data);
+    };
+
+    const deleteService = async (id: string) => {
+        await deleteDoc(doc(db, "services", id));
+    };
+
+    return {
+        services,
+        loading,
+        createService,
+        updateService,
+        deleteService
+    };
+}
+</file>
+
+<file path="src/features/services/services/servicesAdminService.ts">
+import { db } from "../../../shared/services/firebaseService";
+import { collection, addDoc, updateDoc, deleteDoc, doc } from "firebase/firestore";
+
+export const createService = async (data: { name: string; price: number }) => {
+    if (!data.name || data.price <= 0) {
+        throw new Error("Datos inválidos");
+    }
+    const res = await addDoc(collection(db, "services"), data);
+
+    console.log(res);
+
+    //return res;
+};
+
+export const updateService = async (
+    id: string,
+    data: { name: string; price: number }
+) => {
+    await updateDoc(doc(db, "services", id), data);
+};
+
+export const deleteService = async (id: string) => {
+    await deleteDoc(doc(db, "services", id));
+};
+</file>
+
 <file path="src/features/settings/hooks/useSettings.ts">
 import { useEffect, useState } from "react";
 import { subscribeToSettings } from "../services/settingsService";
@@ -603,57 +774,6 @@ export function useSettings() {
 }
 </file>
 
-<file path="src/features/settings/hooks/useSettingsForm.ts">
-import { useEffect, useState } from "react";
-import { useSettings } from "./useSettings";
-import { updateSettings } from "../services/settingsService";
-import { sanitizeText } from "../../../shared/utils/sanitize";
-
-export function useSettingsForm() {
-    const { settings } = useSettings();
-
-    const [companyName, setCompanyName] = useState("");
-    const [isOpen, setIsOpen] = useState(true);
-    const [workingDays, setWorkingDays] = useState<string[]>([]);
-
-    const cleanCompanyName = sanitizeText(companyName);
-
-    useEffect(() => {
-        if (settings) {
-            setCompanyName(settings.company_name);
-            setIsOpen(settings.is_open);
-            setWorkingDays(settings.working_days || []);
-        }
-    }, [settings]);
-
-    const toggleDay = (day: string) => {
-        setWorkingDays(prev =>
-            prev.includes(day)
-                ? prev.filter(d => d !== day)
-                : [...prev, day]
-        );
-    };
-
-    const save = async () => {
-        await updateSettings({
-            company_name: cleanCompanyName,
-            is_open: isOpen,
-            working_days: workingDays
-        });
-    };
-
-    return {
-        companyName,
-        setCompanyName,
-        isOpen,
-        setIsOpen,
-        workingDays,
-        toggleDay,
-        save
-    };
-}
-</file>
-
 <file path="src/features/settings/services/settingsService.ts">
 import { db } from "../../../shared/services/firebaseService";
 import { doc, onSnapshot, updateDoc } from "firebase/firestore";
@@ -674,64 +794,6 @@ export const updateSettings = async (data: any) => {
     const ref = doc(db, "settings", "general");
     await updateDoc(ref, data);
 };
-</file>
-
-<file path="src/features/tickets/components/ReserveForm.tsx">
-import type { Service } from "../types";
-
-import { memo } from "react";
-
-import { sanitizeName } from "../../../shared/utils/sanitize";
-
-type Props = {
-    clientName: string;
-    setClientName: (value: string) => void;
-    serviceId: string;
-    setServiceId: (value: string) => void;
-    services: Service[];
-    onSubmit: (e: React.FormEvent) => void;
-};
-
-function ReserveForm({
-    clientName,
-    setClientName,
-    serviceId,
-    setServiceId,
-    services,
-    onSubmit
-}: Props) {
-    return (
-        <form className="mt-5 flex flex-col gap-3" onSubmit={onSubmit}>
-            <input
-                className="p-3 rounded-md border border-gray-300 text-base focus:outline-none focus:border-black"
-                placeholder="Tu nombre"
-                value={clientName}
-                onChange={(e) => setClientName(e.target.value)}
-            />
-
-            <select
-                className="p-3 rounded-md border border-gray-300 text-base focus:outline-none focus:border-black"
-                value={serviceId}
-                onChange={(e) => {
-                    setServiceId(e.target.value);
-                }}
-            >
-                <option value="">Selecciona un servicio</option>
-                {services.map((s) => (
-                    <option key={s.id} value={s.id}>
-                        {s.name} - ${s.price}
-                    </option>
-                ))}
-            </select>
-
-            <button className="mt-2.5 p-3 text-base font-bold bg-blue-500 text-white border-none rounded-md cursor-pointer transition-colors duration-150 ease-in-out hover:bg-blue-700" type="submit">
-                Confirmar turno
-            </button>
-        </form>
-    )
-}
-
-export default memo(ReserveForm);
 </file>
 
 <file path="src/features/tickets/constants/tickets.ts">
@@ -786,6 +848,130 @@ export function useAlert() {
 }
 </file>
 
+<file path="src/features/users/components/UsersTable.tsx">
+import { useUsers } from "../hooks/useUsers";
+import { useAlert } from "../../tickets/hooks/useAlert";
+
+export default function UsersTable() {
+    const { users, updateRole } = useUsers();
+    const alert = useAlert();
+
+    const handleToggle = async (userId: string, currentRole: string, name: string) => {
+        const newRole = currentRole === "admin" ? "user" : "admin";
+
+        const confirm = await alert.confirm(
+            newRole === "admin"
+                ? `¿Dar permisos de ADMIN a ${name}? Tendrá acceso total al sistema.`
+                : `¿Quitar permisos de ADMIN a ${name}?`
+        );
+
+        if (!confirm.isConfirmed) return;
+
+        try {
+            await updateRole(userId, newRole as "admin" | "user");
+
+            alert.success("Rol actualizado correctamente");
+        } catch (error) {
+            alert.error("Error al actualizar rol");
+        }
+    };
+
+    return (
+        <div className="bg-white rounded-xl shadow p-6">
+            <h2 className="text-lg font-semibold mb-4">
+                👥 Usuarios
+            </h2>
+
+            <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                    <thead>
+                        <tr className="text-left border-b">
+                            <th className="py-2">Nombre</th>
+                            <th className="py-2">Correo</th>
+                            <th className="py-2 text-center">Admin</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {users.map(user => (
+                            <tr key={user.id} className="border-b hover:bg-gray-50">
+                                <td className="py-2">{user.name}</td>
+                                <td className="py-2 text-gray-500 truncate">{user.email}</td>
+
+                                <td className="py-2 text-center">
+                                    <button
+                                        onClick={() =>
+                                            handleToggle(user.id, user.role, user.name)
+                                        }
+                                        className={`cursor-pointer p-1 bg-gray-200
+                                            w-12 h-6 rounded-full transition relative
+                                            ${user.role === "admin" ? "bg-green-500" : "bg-gray-300"}
+                                        `}
+                                    >
+                                        <span
+                                            className={`
+                                                absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition
+                                                ${user.role === "admin" ? "translate-x-6" : ""}
+                                            `}
+                                        />
+                                    </button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
+}
+</file>
+
+<file path="src/features/users/hooks/useUsers.ts">
+import { useEffect, useState } from "react";
+import {
+    collection,
+    onSnapshot,
+    doc,
+    updateDoc
+} from "firebase/firestore";
+import { db } from "../../../shared/services/firebaseService";
+
+export type AppUser = {
+    id: string;
+    name: string;
+    email: string;
+    role: "admin" | "user";
+};
+
+export function useUsers() {
+    const [users, setUsers] = useState<AppUser[]>([]);
+
+    useEffect(() => {
+        const ref = collection(db, "users");
+
+        const unsub = onSnapshot(ref, (snapshot) => {
+            const data = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...(doc.data() as Omit<AppUser, "id">)
+            }));
+            setUsers(data);
+        });
+
+        return () => unsub();
+    }, []);
+
+    const updateRole = async (userId: string, role: "admin" | "user") => {
+        const ref = doc(db, "users", userId);
+        await updateDoc(ref, { role });
+    };
+
+    return {
+        users,
+        updateRole
+    };
+}
+</file>
+
 <file path="src/index.css">
 @keyframes fadeIn {
   from {
@@ -813,100 +999,6 @@ export function useAlert() {
 
 .animate-pulse-once {
   animation: pulseOnce 0.6s ease-out;
-}
-</file>
-
-<file path="src/pages/Admin.tsx">
-import { useSettingsForm } from "../features/settings/hooks/useSettingsForm";
-import { useAlert } from "../features/tickets/hooks/useAlert";
-
-const DAYS = [
-    "lunes",
-    "martes",
-    "miércoles",
-    "jueves",
-    "viernes",
-    "sábado",
-    "domingo"
-];
-
-export default function Admin() {
-    const alert = useAlert();
-
-    const {
-        companyName,
-        setCompanyName,
-        isOpen,
-        setIsOpen,
-        workingDays,
-        toggleDay,
-        save
-    } = useSettingsForm();
-
-    return (
-        <div className="min-h-screen bg-gray-100 p-6">
-            <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-xl p-8 space-y-6">
-
-                <h1 className="text-xl font-bold mb-6">
-                    ⚙️ Configuración del negocio
-                </h1>
-
-                <div className="bg-gray-50 p-4 rounded-xl border">
-                    <label className="text-sm font-semibold">Nombre del negocio</label>
-                    <input
-                        value={companyName}
-                        onChange={(e) => setCompanyName(e.target.value)}
-                        className="w-full mt-2 p-2 border rounded-lg focus:ring-2 focus:ring-black"
-                    />
-                </div>
-
-                <div className="mb-4 flex items-center justify-between">
-                    <span className="text-sm font-semibold">Estado del negocio</span>
-                    <button
-                        onClick={() => setIsOpen(!isOpen)}
-                        className={`px-4 py-2 rounded-lg text-white font-semibold transition ${
-        isOpen ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"
-    }`}
-                    >
-                        {isOpen ? "Abierto" : "Cerrado"}
-                    </button>
-                </div>
-
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    <p className="text-sm font-semibold mb-2">
-                        Días laborales
-                    </p>
-
-                    <div className="grid grid-cols-2 gap-2">
-                        {DAYS.map(day => (
-                            <label
-                                key={day}
-                                className="flex items-center gap-2 cursor-pointer"
-                            >
-                                <input
-                                    type="checkbox"
-                                    checked={workingDays.includes(day)}
-                                    onChange={() => toggleDay(day)}
-                                />
-                                {day}
-                            </label>
-                        ))}
-                    </div>
-                </div>
-
-                <button
-                    onClick={async () => {
-                        await save();
-                        alert.success("Configuración guardada");
-                    }}
-                    className="w-full bg-black text-white py-2 rounded"
-                >
-                    Guardar cambios
-                </button>
-
-            </div>
-        </div>
-    );
 }
 </file>
 
@@ -1060,175 +1152,6 @@ export default function ChartTooltip({ active, payload, label }: Props) {
 }
 </file>
 
-<file path="src/shared/components/Navbar.tsx">
-import { Link } from "react-router-dom";
-import { signOut } from "firebase/auth";
-import { useState, useRef, useEffect } from "react";
-
-import { useAuth } from "../../features/auth/context/AuthContext";
-import { auth } from "../services/firebaseService";
-
-import { useSettings } from "../../features/settings/hooks/useSettings";
-
-export default function Navbar() {
-
-    const { user } = useAuth();
-    const { companyName } = useSettings();
-
-    const [open, setOpen] = useState(false);
-    const dropdownRef = useRef<HTMLDivElement>(null);
-
-    const handleLogout = async () => {
-        await signOut(auth);
-    };
-
-    const getInitial = () => {
-        if (user?.email) return user.email.charAt(0).toUpperCase();
-        return "U";
-    };
-
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (
-                dropdownRef.current &&
-                !dropdownRef.current.contains(event.target as Node)
-            ) {
-                setOpen(false);
-            }
-        };
-
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
-
-    return (
-        <nav className="bg-white shadow px-6 py-3 flex justify-between items-center">
-
-            {/* Left */}
-            <div className="flex items-center gap-6">
-                <Link to="/" className="font-bold text-lg">
-                    💈 {companyName}
-                </Link>
-
-                <Link to="/" className="text-sm text-gray-600 hover:text-black">
-                    Turnos
-                </Link>
-
-                <Link to="/dashboard" className="text-sm text-gray-600 hover:text-black">
-                    Dashboard
-                </Link>
-
-                {user?.role === "admin" && (
-                    <Link to="/admin" className="text-sm text-gray-600 hover:text-black">
-                        Admin
-                    </Link>
-                )}
-            </div>
-
-            {/* Right */}
-            <div className="relative" ref={dropdownRef}>
-
-                {!user ? (
-                    <Link
-                        to="/login"
-                        className="text-sm font-semibold bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 "
-                    >
-                        Iniciar sesión
-                    </Link>
-                ) : (
-                    <>
-                        <button
-                            onClick={() => setOpen(!open)}
-                            className="cursor-pointer w-9 h-9 rounded-full bg-gray-900 text-white flex items-center justify-center font-bold hover:scale-105 transition"
-                        >
-                            {user.photoURL ? (
-                                <img
-                                    src={user.photoURL}
-                                    alt="avatar"
-                                    className="w-full h-full object-cover"
-                                />
-                            ) : (
-                                getInitial()
-                            )}
-                        </button>
-                        
-                        <div
-                            className={`absolute right-0 mt-2 w-52 bg-white border rounded-xl shadow-lg p-2 z-50 transition-all duration-200 origin-top-right
-                            ${open ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"}`}
-                        >
-
-                            <div className="px-3 py-2 border-b">
-                                <p className="text-sm font-semibold truncate">
-                                    {user.displayName || user.email}
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                    {user.role}
-                                </p>
-                            </div>
-                            <Link
-                                to="/"
-                                className="block px-3 py-2 text-sm hover:bg-gray-100 rounded transition"
-                                onClick={() => setOpen(false)}
-                            >
-                                Turnos
-                            </Link>
-
-                            {user.role === "admin" && (
-                                <>
-                                    <Link
-                                        to="/dashboard"
-                                        className="block px-3 py-2 text-sm hover:bg-gray-100 rounded transition"
-                                        onClick={() => setOpen(false)}
-                                    >
-                                        Dashboard
-                                    </Link>
-                                    <Link
-                                        to="/admin"
-                                        className="block px-3 py-2 text-sm hover:bg-gray-100 rounded transition"
-                                        onClick={() => setOpen(false)}
-                                    >
-                                        Panel Admin
-                                    </Link>
-                                </>
-                            )}
-
-                            <button
-                                onClick={handleLogout}
-                                className="cursor-pointer w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-gray-100 rounded transition"
-                            >
-                                Cerrar sesión
-                            </button>
-                        </div>
-
-                    </>
-                )}
-            </div>
-        </nav>
-    );
-}
-</file>
-
-<file path="src/shared/services/firebaseService.ts">
-import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
-
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID
-};
-
-const app = initializeApp(firebaseConfig);
-
-export const db = getFirestore(app);
-export const auth = getAuth(app);
-export default app;
-</file>
-
 <file path="src/shared/types/apiResponse.ts">
 export type ApiResponse =
     | { ok: true }
@@ -1268,6 +1191,23 @@ export const capitalizeWords = (text?: string) => {
         .filter(Boolean)
         .map(word => word[0].toUpperCase() + word.slice(1))
         .join(" ");
+};
+</file>
+
+<file path="src/shared/utils/sanitize.ts">
+export const sanitizeText = (text: string) => {
+  return text
+    .trim() // quita espacios al inicio y final
+    .replace(/\s+/g, " "); // evita espacios dobles
+};
+
+export const sanitizeName = (name: string) => {
+  return sanitizeText(name)
+    .replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, ""); // solo letras
+};
+
+export const sanitizeEmail = (email: string) => {
+  return sanitizeText(email).toLowerCase();
 };
 </file>
 
@@ -1353,169 +1293,102 @@ export default defineConfig({
 })
 </file>
 
-<file path="src/features/dashboard/components/IncomeByServiceChart.tsx">
-import { getColorByIndex } from "../../../shared/utils/chartColors";
-
-import ChartTooltip from "../../../shared/components/ChartTooltip";
-
-import CustomBar from "./CustomBar";
+<file path="src/features/auth/services/authService.ts">
+import { auth, db } from "../../../shared/services/firebaseService";
 import {
-    BarChart,
-    Bar,
-    XAxis,
-    YAxis,
-    Tooltip,
-    ResponsiveContainer
-} from "recharts";
-import EmptyState from "./EmptyState";
+  signInWithPopup,
+  GoogleAuthProvider,
+  signInWithEmailAndPassword,
+  onAuthStateChanged,
+  signOut,
+  createUserWithEmailAndPassword,
+  updateProfile
+} from "firebase/auth";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 
-type Props = {
-    data: { name: string; value: number }[];
+const provider = new GoogleAuthProvider();
+
+export const loginWithGoogle = async () => {
+  const result = await signInWithPopup(auth, provider);
+  const user = result.user;
+
+  const ref = doc(db, "users", user.uid);
+  const snap = await getDoc(ref);
+
+  if (!snap.exists()) {
+    // crear usuario si no existe
+    await setDoc(ref, {
+      email: user.email,
+      name: user.displayName,
+      role: "user"
+    });
+  }
+
+  return user;
 };
 
-export default function IncomeByServiceChart({ data }: Props) {
-    return (
-        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-            <h3 className="text-sm font-semibold text-gray-600 mb-3">Ingresos por servicio</h3>
+export const loginWithEmail = async (email: string, password: string) => {
+  const result = await signInWithEmailAndPassword(auth, email, password);
+  return result.user;
+};
 
-            {data.length === 0 ? (
-                <EmptyState
-                    title="Sin ingresos por servicios registrados"
-                    description="Aquí verás cuánto has ganado por cada servicio cerrado"
-                />
-            ) : (
+export const logout = () => signOut(auth);
 
-            <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={data}>
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip content={<ChartTooltip />} />
-                    <Bar dataKey="value"
-                        shape={<CustomBar />} />
-                </BarChart>
-            </ResponsiveContainer>
-            )}
+export const subscribeToAuth = (callback: (user: any) => void) => {
+  return onAuthStateChanged(auth, callback);
+};
 
-            <div className="mt-3 flex flex-wrap gap-2 text-xs">
-                {data.map((item, index) => (
-                    <div key={item.name} className="flex items-center gap-1">
-                        <span
-                            className="w-3 h-3 rounded-full"
-                            style={{ backgroundColor: getColorByIndex(index) }}
-                        />
-                        {item.name}
-                    </div>
-                ))}
-            </div>
-        </div>
-    );
-}
+export const getUserRole = async (uid: string) => {
+  const ref = doc(db, "users", uid);
+  const snap = await getDoc(ref);
+
+  if (snap.exists()) {
+    return snap.data().role;
+  }
+
+  return "user";
+};
+
+export const registerUser = async (
+  email: string,
+  password: string,
+  name: string
+) => {
+
+  const res = await createUserWithEmailAndPassword(auth, email, password);
+
+  await setDoc(doc(db, "users", res.user.uid), {
+    email,
+    name,
+    role: "user"
+  });
+
+  await updateProfile(res.user, {
+    displayName: name
+});
+
+  return res.user;
+};
 </file>
 
-<file path="src/features/dashboard/components/IncomeChart.tsx">
-import ChartTooltip from "../../../shared/components/ChartTooltip";
-
-import {
-    LineChart,
-    Line,
-    XAxis,
-    YAxis,
-    Tooltip,
-    ResponsiveContainer
-} from "recharts";
-import EmptyState from "./EmptyState";
-
-type Props = {
-    data: { label: string; value: number }[];
-};
-
-
-
-export default function IncomeChart({ data }: Props) {
-    return (
-        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-            <h3 className="text-sm font-semibold text-gray-600 mb-3">
-                Ingresos totales
-            </h3>
-            {data.length === 0 ? (
-            <EmptyState
-                title="Sin ingresos registrados"
-                description="Los ingresos aparecerán cuando finalices servicios"
-            />
-            ) : (
-            <ResponsiveContainer width="100%" height={250}>
-                <LineChart data={data}>
-                    <XAxis dataKey="label" />
-                    <YAxis />
-                    <Tooltip content={<ChartTooltip />} />
-                    <Line type="monotone" dataKey="value" strokeWidth={3} />
-                </LineChart>
-            </ResponsiveContainer>
-            )}
-        </div>
-    );
-}
-</file>
-
-<file path="src/features/dashboard/components/ServicesChart.tsx">
+<file path="src/features/dashboard/components/CustomBar.tsx">
+import { Rectangle } from "recharts";
 import { getColorByIndex } from "../../../shared/utils/chartColors";
 
-import ChartTooltip from "../../../shared/components/ChartTooltip";
+export default function CustomBar(props: any) {
+    const { x, y, width, height, index } = props;
 
-import CustomBar from "./CustomBar";
+    if (width <= 0 || height <= 0) return null;
 
-import {
-    BarChart,
-    Bar,
-    XAxis,
-    YAxis,
-    Tooltip,
-    ResponsiveContainer
-} from "recharts";
-import EmptyState from "./EmptyState";
-
-type Props = {
-    data: { name: string; count: number }[];
-};
-
-export default function ServicesChart({ data }: Props) {
     return (
-        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-            <h3 className="text-sm font-semibold text-gray-600 mb-3">
-                Servicios mas prestados
-            </h3>
-
-            {data.length === 0 ? (
-                <EmptyState
-                    title="Sin servicios registrados"
-                    description="Aquí verás cuáles servicios son más solicitados"
-                />
-            ) : (
-
-                <ResponsiveContainer width="100%" height={250}>
-                    <BarChart data={data}>
-                        <XAxis dataKey="name" />
-                        <YAxis />
-                        <Tooltip content={<ChartTooltip />} />
-                        <Bar dataKey="count"
-                            shape={<CustomBar />} />
-
-                    </BarChart>
-                </ResponsiveContainer>
-            )}
-
-            <div className="mt-3 flex flex-wrap gap-2 text-xs">
-                {data.map((item, index) => (
-                    <div key={item.name} className="flex items-center gap-1">
-                        <span
-                            className="w-3 h-3 rounded-full"
-                            style={{ backgroundColor: getColorByIndex(index) }}
-                        />
-                        {item.name}
-                    </div>
-                ))}
-            </div>
-        </div >
+        <Rectangle
+            x={x}
+            y={y}
+            width={width}
+            height={height}
+            fill={getColorByIndex(index)}
+            radius={[6, 6, 0, 0]} // bordes redondeados arriba
+        />
     );
 }
 </file>
@@ -1546,6 +1419,147 @@ export const getRecentTickets = async () => {
     
     return tickets;
 };
+</file>
+
+<file path="src/features/services/components/ServiceList.tsx">
+import { useState } from "react";
+import { useServices } from "../hooks/useServices";
+import ServiceModal from "./ServiceModal";
+import { useAlert } from "../../tickets/hooks/useAlert";
+import { formatCOP } from "../../../shared/utils/currency";
+
+export default function ServiceList() {
+    const { services, createService, updateService, deleteService } = useServices();
+    const alert = useAlert();
+
+    const [showModal, setShowModal] = useState(false);
+    const [editingService, setEditingService] = useState<any>(null);
+
+    return (
+        <div>
+            <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold">Servicios</h2>
+
+                <button
+                    onClick={() => {
+                        setEditingService(null);
+                        setShowModal(true);
+                    }}
+                    className="cursor-pointer bg-black text-white px-3 py-2 rounded"
+                >
+                    + Nuevo
+                </button>
+            </div>
+
+            <div className="space-y-2">
+                {services.map((s) => (
+                    <div
+                        key={s.id}
+                        className="flex justify-between items-center p-3 border-b shadow-lg rounded"
+                    >
+                        <div>
+                            <p className="font-semibold truncate">{s.name}</p>
+                            <p className="text-sm text-gray-500">$ {formatCOP(s.price)}</p>
+                        </div>
+
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => {
+                                    setEditingService(s);
+                                    setShowModal(true);
+                                }}
+                                className="cursor-pointer text-blue-600 text-sm"
+                            >
+                                Editar
+                            </button>
+
+                            <button
+                                onClick={async () => {
+                                    const confirm = await alert.confirm(
+                                        "¿Eliminar este servicio?"
+                                    );
+
+                                    if (!confirm.isConfirmed) return;
+
+                                    await deleteService(s.id);
+                                    alert.success("Servicio eliminado");
+                                }}
+                                className="cursor-pointer text-red-600 text-sm"
+                            >
+                                Eliminar
+                            </button>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            <ServiceModal
+                isOpen={showModal}
+                onClose={() => setShowModal(false)}
+                initialData={editingService}
+                isEditing={!!editingService}
+                onSubmit={async (data) => {
+                    if (editingService) {
+                        await updateService(editingService.id, data);
+                    } else {
+                        await createService(data);
+                    }
+                }}
+            />
+        </div>
+    );
+}
+</file>
+
+<file path="src/features/settings/hooks/useSettingsForm.ts">
+import { useEffect, useState } from "react";
+import { useSettings } from "./useSettings";
+import { updateSettings } from "../services/settingsService";
+import { sanitizeText } from "../../../shared/utils/sanitize";
+
+export function useSettingsForm() {
+    const { settings } = useSettings();
+
+    const [companyName, setCompanyName] = useState("");
+    const [isOpen, setIsOpen] = useState(true);
+    const [workingDays, setWorkingDays] = useState<string[]>([]);
+
+    const cleanCompanyName = sanitizeText(companyName);
+
+    useEffect(() => {
+        if (settings) {
+            setCompanyName(settings.company_name);
+            setIsOpen(settings.is_open);
+            setWorkingDays(settings.working_days || []);
+        }
+    }, [settings]);
+
+    const toggleDay = (day: string) => {
+        setWorkingDays(prev =>
+            prev.includes(day)
+                ? prev.filter(d => d !== day)
+                : [...prev, day]
+        );
+    };
+
+    const save = async () => {
+        await updateSettings({
+            company_name: cleanCompanyName,
+            is_open: isOpen,
+            working_days: workingDays
+        });
+    };
+
+    return {
+        companyName,
+        setCompanyName,
+        isOpen,
+        setIsOpen,
+        workingDays,
+        toggleDay,
+        save
+    };
+}
 </file>
 
 <file path="src/features/tickets/components/CurrentTicket.tsx">
@@ -1711,24 +1725,62 @@ function FinishModal({
 export default memo(FinishModal);
 </file>
 
-<file path="src/features/tickets/services/servicesService.ts">
-import { db } from "../../../shared/services/firebaseService";
-import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
+<file path="src/features/tickets/components/ReserveForm.tsx">
 import type { Service } from "../types";
 
-export const subscribeToServices = (callback: (services: Service[]) => void) => {
+import { memo } from "react";
 
-    const q = query(collection(db, "services"), orderBy("name", "asc"));
+import { sanitizeName } from "../../../shared/utils/sanitize";
 
-    const unsub = onSnapshot(q, (snapshot) => {
-        const data: Service[] = snapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...(doc.data() as Omit<Service, "id">),
-        }));
-        callback(data);
-    });
-    return unsub;
+type Props = {
+    clientName: string;
+    setClientName: (value: string) => void;
+    serviceId: string;
+    setServiceId: (value: string) => void;
+    services: Service[];
+    onSubmit: (e: React.FormEvent) => void;
 };
+
+function ReserveForm({
+    clientName,
+    setClientName,
+    serviceId,
+    setServiceId,
+    services,
+    onSubmit
+}: Props) {
+    return (
+        <form className="mt-5 flex flex-col gap-3" onSubmit={onSubmit}>
+            <input
+                className="p-3 rounded-md border border-gray-300 text-base focus:outline-none focus:border-black"
+                placeholder="Tu nombre"
+                value={clientName}
+                onChange={(e) => setClientName(e.target.value)}
+            />
+
+            <select
+                className="p-3 rounded-md border border-gray-300 text-base focus:outline-none focus:border-black"
+                value={serviceId}
+                onChange={(e) => {
+                    setServiceId(e.target.value);
+                }}
+            >
+                <option value="">Selecciona un servicio</option>
+                {services.map((s) => (
+                    <option key={s.id} value={s.id}>
+                        {s.name} - ${s.price}
+                    </option>
+                ))}
+            </select>
+
+            <button className="mt-2.5 p-3 text-base font-bold bg-blue-500 text-white border-none rounded-md cursor-pointer transition-colors duration-150 ease-in-out hover:bg-blue-700" type="submit">
+                Confirmar turno
+            </button>
+        </form>
+    )
+}
+
+export default memo(ReserveForm);
 </file>
 
 <file path="src/features/tickets/types/index.ts">
@@ -1782,110 +1834,6 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     </BrowserRouter>
   </React.StrictMode>,
 )
-</file>
-
-<file path="src/pages/Register.tsx">
-import { useState } from "react";
-import { registerUser } from "../features/auth/services/authService";
-import { useNavigate, Link } from "react-router-dom";
-
-import { sanitizeName, sanitizeEmail } from "../shared/utils/sanitize";
-
-export default function Register() {
-    const [name, setName] = useState("");
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
-
-    const cleanName = sanitizeName(name);
-    const cleanEmail = sanitizeEmail(email);
-
-    const navigate = useNavigate();
-
-    const handleRegister = async (e: any) => {
-        e.preventDefault();
-
-        if (!cleanName || !cleanEmail || !password) {
-            setError("Completa todos los campos");
-            return;
-        }
-
-        if (password.length < 6) {
-            setError("La contraseña debe tener al menos 6 caracteres");
-            return;
-        }
-
-        try {
-            setError("");
-            setLoading(true);
-            await registerUser(cleanEmail, password, cleanName);
-            navigate("/");
-        } catch (error) {
-            setError("Error al registrarse");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
-            <div className="bg-white p-6 rounded-2xl shadow-lg w-full max-w-sm">
-
-                <h1 className="text-2xl font-bold mb-1 text-center">
-                    Crear cuenta
-                </h1>
-
-                <p className="text-sm text-gray-500 mb-4 text-center">
-                    Regístrate para gestionar tu barbería
-                </p>
-
-                <form onSubmit={handleRegister} className="flex flex-col gap-3">
-
-                    <input
-                        placeholder="Nombre"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        className="border p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                    />
-
-                    <input
-                        placeholder="Correo electrónico"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="border p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                    />
-
-                    <input
-                        type="password"
-                        placeholder="Contraseña"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="border p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                    />
-
-                    {error && (
-                        <p className="text-red-500 text-sm text-center">{error}</p>
-                    )}
-
-                    <button
-                        disabled={loading}
-                        className="bg-black text-white p-2 rounded-lg mt-2 hover:bg-gray-900 transition disabled:opacity-50"
-                    >
-                        {loading ? "Creando..." : "Registrarse"}
-                    </button>
-                </form>
-
-                <p className="text-xs text-center mt-4 text-gray-500">
-                    ¿Ya tienes cuenta?{" "}
-                    <Link to="/login" className="text-black font-semibold">
-                        Inicia sesión
-                    </Link>
-                </p>
-            </div>
-        </div>
-    );
-}
 </file>
 
 <file path="src/shared/components/FloatingMenu.tsx">
@@ -1951,6 +1899,27 @@ export default function FloatingMenu() {
 }
 </file>
 
+<file path="src/shared/services/firebaseService.ts">
+import { initializeApp } from "firebase/app";
+import { getFirestore } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
+
+const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID
+};
+
+const app = initializeApp(firebaseConfig);
+
+export const db = getFirestore(app);
+export const auth = getAuth(app);
+export default app;
+</file>
+
 <file path="src/shared/utils/errorHandler.ts">
 export const handleError = (error: unknown, message = "Ocurrió un error") => {
     console.error(error);
@@ -1961,173 +1930,276 @@ export const handleError = (error: unknown, message = "Ocurrió un error") => {
 };
 </file>
 
-<file path="src/features/dashboard/hooks/useDashboard.ts">
-import { useEffect, useState, useMemo } from "react";
-import { getRecentTickets } from "../services/dashboardService";
+<file path="src/features/dashboard/components/IncomeByServiceChart.tsx">
+import { getColorByIndex } from "../../../shared/utils/chartColors";
 
-import { subscribeToServices } from "../../tickets/services/servicesService";
-import type { Service } from "../../tickets/types";
+import ChartTooltip from "../../../shared/components/ChartTooltip";
 
-let cache: any = null;
-let lastFetch = 0;
-const CACHE_TIME = 1000 * 60 * 5; // 5 minutos
+import CustomBar from "./CustomBar";
+import {
+    BarChart,
+    Bar,
+    XAxis,
+    YAxis,
+    Tooltip,
+    ResponsiveContainer
+} from "recharts";
+import EmptyState from "./EmptyState";
 
-type FilterType = "today" | "week" | "month" | "lastSevenDays";
+type Props = {
+    data: { name: string; value: number }[];
+};
 
-export function useDashboard() {
-    const [data, setData] = useState<any[]>([]);
-    const [filter, setFilter] = useState<FilterType>("today");
-    const [loading, setLoading] = useState(true);
+export default function IncomeByServiceChart({ data }: Props) {
+    return (
+        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 w-full min-h-75">
+            <h3 className="text-sm font-semibold text-gray-600 mb-3">Ingresos por servicio</h3>
 
-    const [services, setServices] = useState<Service[]>([]);
+            {data.length === 0 ? (
+                <EmptyState
+                    title="Sin ingresos por servicios registrados"
+                    description="Aquí verás cuánto has ganado por cada servicio cerrado"
+                />
+            ) : (
+                <div className="h-64" >
+                    <ResponsiveContainer width="100%" height={250}>
+                        <BarChart data={data}>
+                            <XAxis dataKey="name" />
+                            <YAxis />
+                            <Tooltip content={<ChartTooltip />} />
+                            <Bar dataKey="value"
+                                shape={<CustomBar />} />
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+            )}
 
-    const servicesMap = useMemo(
-        () => Object.fromEntries(
-            services.map(s => [s.id, { name: s.name, price: s.price }])
-        ),
-        [services]
+            <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                {data.map((item, index) => (
+                    <div key={item.name} className="flex items-center gap-1">
+                        <span
+                            className="w-3 h-3 rounded-full"
+                            style={{ backgroundColor: getColorByIndex(index) }}
+                        />
+                        {item.name}
+                    </div>
+                ))}
+            </div>
+        </div>
     );
+}
+</file>
 
-    useEffect(() => {
+<file path="src/features/dashboard/components/IncomeChart.tsx">
+import ChartTooltip from "../../../shared/components/ChartTooltip";
 
-        if (cache && Date.now() - lastFetch < CACHE_TIME) {
-            setData(cache);
-            setLoading(false);
-            return;
-        }
+import {
+    LineChart,
+    Line,
+    XAxis,
+    YAxis,
+    Tooltip,
+    ResponsiveContainer
+} from "recharts";
+import EmptyState from "./EmptyState";
 
-        const load = async () => {
-            const res = await getRecentTickets();
-            cache = res;
-            lastFetch = Date.now();
-            setData(res);
-            setLoading(false)
-        };
+type Props = {
+    data: { label: string; value: number }[];
+};
 
-        load();
 
-        const unsubServices = subscribeToServices(setServices);
-        return () => {
-            unsubServices();
-        };
 
-    }, []);
+export default function IncomeChart({ data }: Props) {
+    return (
+        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 w-full min-h-75">
+            <h3 className="text-sm font-semibold text-gray-600 mb-3">
+                Ingresos totales
+            </h3>
+            {data.length === 0 ? (
+                <EmptyState
+                    title="Sin ingresos registrados"
+                    description="Los ingresos aparecerán cuando finalices servicios"
+                />
+            ) : (
+                <div className="h-64" >
+                    <ResponsiveContainer width="100%" height={250}>
+                        <LineChart data={data}>
+                            <XAxis dataKey="label" />
+                            <YAxis />
+                            <Tooltip content={<ChartTooltip />} />
+                            <Line type="monotone" dataKey="value" strokeWidth={3} />
+                        </LineChart>
+                    </ResponsiveContainer>
+                </div>
+            )}
+        </div>
+    );
+}
+</file>
 
-    const filteredData = useMemo(() => {
-        const now = new Date();
+<file path="src/features/dashboard/components/PaymentsMethodChart.tsx">
+import { getColorByIndex } from "../../../shared/utils/chartColors";
+import { Cell } from "recharts";
 
-        return data.filter(t => {
-            if (!t.finished_at) return false;
+import { formatCOP } from "../../../shared/utils/currency";
 
-            const date = t.finished_at.toDate();
+import {
+    PieChart,
+    Pie,
+    Tooltip,
+    ResponsiveContainer,
+    Legend
+} from "recharts";
+import EmptyState from "./EmptyState";
 
-            if (filter === "today") {
-                return date.toDateString() === now.toDateString();
-            }
 
-            if (filter === "lastSevenDays") {
-                const weekAgo = new Date();
-                weekAgo.setDate(now.getDate() - 7);
-                return date >= weekAgo;
-            }
-
-            if (filter === "week") {
-                const startOfWeek = new Date(now);
-                const day = startOfWeek.getDay();
-                const diff = day === 0 ? -6 : 1 - day;
-
-                startOfWeek.setDate(now.getDate() + diff);
-                startOfWeek.setHours(0, 0, 0, 0);
-
-                return date >= startOfWeek;
-            }
-
-            if (filter === "month") {
-                const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-                return date >= startOfMonth;
-            }
-
-            return true;
-        });
-    }, [data, filter]);
-
-    const stats = useMemo(() => {
-        const total = filteredData.reduce((acc, t) => acc + (t.price || 0), 0);
-        const count = filteredData.length;
-        const average = count ? total / count : 0;
-
-        return { 
-            total: Number(total) || 0, 
-            count: Number(count) || 0, 
-            average: Number(average) || 0 
-        };
-    }, [filteredData]);
-
-    const incomeChart = useMemo(() => {
-        const map: Record<string, number> = {};
-
-        filteredData.forEach(t => {
-            const date = t.finished_at.toDate();
-            let key = "";
-
-            if (filter === "today") {
-                key = `${date.getHours()}:00`;
-            }
-
-            if (filter === "week" || filter === "month") {
-                key = date.toLocaleDateString("es-CO", {
-                    day: "2-digit",
-                    month: "2-digit"
-                });
-            }
-
-            map[key] = (map[key] || 0) + (t.price || 0);
-        });
-
-        return Object.entries(map).map(([label, value]) => ({
-            label,
-            value
-        }));
-    }, [filteredData, filter]);
-
-    const servicesChart = useMemo(() => {
-        const map: Record<string, number> = {};
-
-        filteredData.forEach(t => {
-            const service = servicesMap[t.service_id]?.name || "Servicio";
-
-            map[service] = (map[service] || 0) + 1;
-        });
-
-        return Object.entries(map).map(([name, count]) => ({
-            name,
-            count
-        }));
-    }, [filteredData, servicesMap]);
-
-    const incomeByService = useMemo(() => {
-        const map: Record<string, number> = {};
-
-        filteredData.forEach(t => {
-            const service = servicesMap[t.service_id]?.name || "Servicio";
-            map[service] = (map[service] || 0) + (t.price || 0);
-        });
-
-        return Object.entries(map).map(([name, value]) => ({
-            name,
-            value
-        }));
-    }, [filteredData]);
-
-    return {
-        stats,
-        filter,
-        setFilter,
-        loading,
-        incomeChart,
-        servicesChart,
-        incomeByService
+type Props = {
+    data: {
+        cashTotal: number;
+        nequiTotal: number;
+        cashCount: number;
+        nequiCount: number;
     };
+};
+
+export default function PaymentsMethodChart({ data }: Props) {
+
+    const chartData = [
+        {
+            name: "Efectivo",
+            value: data.cashTotal,
+            count: data.cashCount
+        },
+        {
+            name: "Nequi",
+            value: data.nequiTotal,
+            count: data.nequiCount
+        }
+    ].filter(d => d.value > 0);
+
+    return (
+        <div className="bg-white rounded-xl shadow p-4 w-full min-h-75">
+            <h3 className="text-sm font-semibold text-gray-600 mb-3">
+                Métodos de pago
+            </h3>
+
+            {chartData.length === 0 ? (
+                <EmptyState
+                    title="Sin pagos registrados"
+                    description="Los pagos aparecerán cuando finalices servicios"
+                />
+            ) : (
+                <div className="h-64" >
+                    <ResponsiveContainer>
+                        <PieChart>
+                            <Pie
+                                data={chartData}
+                                dataKey="value"
+                                nameKey="name"
+                                innerRadius={60}
+                                outerRadius={100}
+                            >
+                                {chartData.map((_, index) => (
+                                    <Cell
+                                        key={index}
+                                        fill={getColorByIndex(index)}
+                                    />
+                                ))}
+                            </Pie>
+
+                            <Tooltip
+
+                                contentStyle={{
+                                    backgroundColor: "#ffffff",
+                                    padding: 12,
+                                    borderRadius: 5,
+                                    boxShadow: "0 10px 15px rgba(0, 0, 0, 0.08)",
+                                    fontSize: "0.875rem",
+                                    fontWeight: "500",
+                                    border: "1px solid #000"
+                                }}
+                                itemStyle={{
+                                    color: "#000",
+                                }}
+                                formatter={(value, name, props: any) => {
+                                    const amount = typeof value === "number" ? value : 0;
+                                    return [
+                                        `${formatCOP(amount)} (${props.payload.count} pagos)`,
+                                        name
+                                    ];
+                                }}
+                            />
+                            <Legend />
+                        </PieChart>
+                    </ResponsiveContainer>
+                </div>
+            )}
+        </div>
+    );
+}
+</file>
+
+<file path="src/features/dashboard/components/ServicesChart.tsx">
+import { getColorByIndex } from "../../../shared/utils/chartColors";
+
+import ChartTooltip from "../../../shared/components/ChartTooltip";
+
+import CustomBar from "./CustomBar";
+
+import {
+    BarChart,
+    Bar,
+    XAxis,
+    YAxis,
+    Tooltip,
+    ResponsiveContainer
+} from "recharts";
+import EmptyState from "./EmptyState";
+
+type Props = {
+    data: { name: string; count: number }[];
+};
+
+export default function ServicesChart({ data }: Props) {
+    return (
+        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 w-full min-h-75">
+            <h3 className="text-sm font-semibold text-gray-600 mb-3">
+                Servicios mas prestados
+            </h3>
+
+            {data.length === 0 ? (
+                <EmptyState
+                    title="Sin servicios registrados"
+                    description="Aquí verás cuáles servicios son más solicitados"
+                />
+            ) : (
+                <div className="h-64" >
+                    <ResponsiveContainer width="100%" height={250}>
+                        <BarChart data={data}>
+                            <XAxis dataKey="name" />
+                            <YAxis />
+                            <Tooltip content={<ChartTooltip />} />
+                            <Bar dataKey="count"
+                                shape={<CustomBar />} />
+
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+            )}
+
+            <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                {data.map((item, index) => (
+                    <div key={item.name} className="flex items-center gap-1">
+                        <span
+                            className="w-3 h-3 rounded-full"
+                            style={{ backgroundColor: getColorByIndex(index) }}
+                        />
+                        {item.name}
+                    </div>
+                ))}
+            </div>
+        </div >
+    );
 }
 </file>
 
@@ -2364,6 +2436,35 @@ export function useTickets() {
 }
 </file>
 
+<file path="src/features/tickets/services/servicesService.ts">
+import { db } from "../../../shared/services/firebaseService";
+import { 
+    collection, 
+    onSnapshot, 
+    orderBy, 
+    query,
+    addDoc,
+    getDocs,
+    updateDoc,
+    doc
+} from "firebase/firestore";
+import type { Service } from "../types";
+
+export const subscribeToServices = (callback: (services: Service[]) => void) => {
+
+    const q = query(collection(db, "services"), orderBy("name", "asc"));
+
+    const unsub = onSnapshot(q, (snapshot) => {
+        const data: Service[] = snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...(doc.data() as Omit<Service, "id">),
+        }));
+        callback(data);
+    });
+    return unsub;
+};
+</file>
+
 <file path="src/features/tickets/services/ticketService.ts">
 import { db } from "../../../shared/services/firebaseService";
 import {
@@ -2480,170 +2581,350 @@ export const markNoShow = async (ticketId: string) => {
 };
 </file>
 
-<file path="src/pages/Dashboard.tsx">
-import StatsCard from "../features/dashboard/components/StatsCard";
-import FilterTabs from "../features/dashboard/components/FilterTabs";
-import IncomeChart from "../features/dashboard/components/IncomeChart";
-import ServicesChart from "../features/dashboard/components/ServicesChart";
-import IncomeByService from "../features/dashboard/components/IncomeByServiceChart";
+<file path="src/pages/Admin.tsx">
+import { useSettingsForm } from "../features/settings/hooks/useSettingsForm";
+import { useAlert } from "../features/tickets/hooks/useAlert";
 
-import { useDashboard } from "../features/dashboard/hooks/useDashboard";
+import UsersTable from "../features/users/components/UsersTable";
 
-import { formatCOP } from "../shared/utils/currency";
+import ServiceList from "../features/services/components/ServiceList";
 
-export default function Dashboard() {
-    const { stats, loading, filter, setFilter, incomeChart, servicesChart, incomeByService } = useDashboard();
+const DAYS = [
+    "lunes",
+    "martes",
+    "miércoles",
+    "jueves",
+    "viernes",
+    "sábado",
+    "domingo"
+];
 
-    if (loading) return <p className="p-6">Cargando...</p>;
+export default function Admin() {
+    const alert = useAlert();
+
+    const {
+        companyName,
+        setCompanyName,
+        isOpen,
+        setIsOpen,
+        workingDays,
+        toggleDay,
+        save
+    } = useSettingsForm();
 
     return (
         <div className="min-h-screen bg-gray-100 p-6">
-            <h3 className="text-2xl font-bold text-gray-900">
-                📊 Dashboard
-            </h3>
-            <p className="text-sm text-gray-500">
-                Resumen de ingresos y servicios
-            </p>
+            <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-xl p-8 space-y-6">
 
-            <div className="mb-6 flex justify-center">
-                <FilterTabs filter={filter} setFilter={setFilter} />
+                <h1 className="text-xl font-bold mb-6">
+                    ⚙️ Configuración del negocio
+                </h1>
+
+                <div className="bg-gray-50 p-4 rounded-xl border">
+                    <label className="text-sm font-semibold">Nombre del negocio</label>
+                    <input
+                        value={companyName}
+                        onChange={(e) => setCompanyName(e.target.value)}
+                        className="w-full mt-2 p-2 border rounded-lg focus:ring-2 focus:ring-black"
+                    />
+                </div>
+
+                <div className="mb-4 flex items-center justify-between">
+                    <span className="text-sm font-semibold">Estado del negocio</span>
+                    <button
+                        onClick={() => setIsOpen(!isOpen)}
+                        className={`px-4 py-2 rounded-lg text-white font-semibold transition ${isOpen ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"
+                            }`}
+                    >
+                        {isOpen ? "Abierto" : "Cerrado"}
+                    </button>
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    <p className="text-sm font-semibold mb-2">
+                        Días laborales
+                    </p>
+
+                    <div className="grid grid-cols-2 gap-2">
+                        {DAYS.map(day => (
+                            <label
+                                key={day}
+                                className="flex items-center gap-2 cursor-pointer"
+                            >
+                                <input
+                                    type="checkbox"
+                                    checked={workingDays.includes(day)}
+                                    onChange={() => toggleDay(day)}
+                                />
+                                {day}
+                            </label>
+                        ))}
+                    </div>
+                </div>
+
+                <button
+                    onClick={async () => {
+                        await save();
+                        alert.success("Configuración guardada");
+                    }}
+                    className="w-full bg-black text-white py-2 rounded"
+                >
+                    Guardar cambios
+                </button>
+
+            </div>
+            <div className="max-w-3xl mt-6 mx-auto bg-white rounded-2xl shadow-xl space-y-6">
+                <div className="bg-white rounded-xl shadow p-6">
+                    <ServiceList />
+                </div>
             </div>
 
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <StatsCard
-                    title="Total"
-                    value={`$ ${formatCOP(stats.total || 0)}`}
-                />
-                <StatsCard
-                    title="Servicios"
-                    value={String(stats.count)}
-                />
-                <StatsCard
-                    title="Promedio"
-                    value={`$ ${formatCOP(stats.average || 0)}`}
-                />
+            <div className="max-w-3xl mt-6 mx-auto bg-white rounded-2xl shadow-xl space-y-6">
+                <div className="bg-white rounded-xl shadow p-6">
+                    <UsersTable />
+                </div>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-6 mt-5">
-                <IncomeChart data={incomeChart} />
-                <ServicesChart data={servicesChart} />
-                <IncomeByService data={incomeByService} />
-            </div>
+        </div >
+    );
+}
+</file>
 
+<file path="src/pages/Register.tsx">
+import { useState } from "react";
+import { registerUser } from "../features/auth/services/authService";
+import { useNavigate, Link } from "react-router-dom";
+
+import { sanitizeName, sanitizeEmail } from "../shared/utils/sanitize";
+
+export default function Register() {
+    const [name, setName] = useState("");
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
+
+    const cleanName = sanitizeName(name);
+    const cleanEmail = sanitizeEmail(email);
+
+    const navigate = useNavigate();
+
+    const handleRegister = async (e: any) => {
+        e.preventDefault();
+
+        if (!cleanName || !cleanEmail || !password) {
+            setError("Completa todos los campos");
+            return;
+        }
+
+        if (password.length < 6) {
+            setError("La contraseña debe tener al menos 6 caracteres");
+            return;
+        }
+
+        try {
+            setError("");
+            setLoading(true);
+            await registerUser(cleanEmail, password, cleanName);
+            navigate("/");
+        } catch (error) {
+            setError("Error al registrarse");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
+            <div className="bg-white p-6 rounded-2xl shadow-lg w-full max-w-sm">
+
+                <h1 className="text-2xl font-bold mb-1 text-center">
+                    Crear cuenta
+                </h1>
+
+                <p className="text-sm text-gray-500 mb-4 text-center">
+                    Regístrate para gestionar tu barbería
+                </p>
+
+                <form onSubmit={handleRegister} className="flex flex-col gap-3">
+
+                    <input
+                        placeholder="Nombre"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        className="border p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                    />
+
+                    <input
+                        placeholder="Correo electrónico"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="border p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                    />
+
+                    <input
+                        type="password"
+                        placeholder="Contraseña"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="border p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                    />
+
+                    {error && (
+                        <p className="text-red-500 text-sm text-center">{error}</p>
+                    )}
+
+                    <button
+                        disabled={loading}
+                        className="bg-black text-white p-2 rounded-lg mt-2 hover:bg-gray-900 transition disabled:opacity-50"
+                    >
+                        {loading ? "Creando..." : "Registrarse"}
+                    </button>
+                </form>
+
+                <p className="text-xs text-center mt-4 text-gray-500">
+                    ¿Ya tienes cuenta?{" "}
+                    <Link to="/login" className="text-black font-semibold">
+                        Inicia sesión
+                    </Link>
+                </p>
+            </div>
         </div>
     );
 }
 </file>
 
-<file path="src/pages/PublicQueue.tsx">
-import { useEffect, useMemo, useState } from "react";
-import { subscribeToTickets } from "../features/tickets/services/ticketService";
-import { subscribeToServices } from "../features/tickets/services/servicesService";
-import { Timestamp } from "firebase/firestore";
-import type { Ticket, Service } from "../features/tickets/types";
+<file path="src/shared/components/Navbar.tsx">
+import { Link } from "react-router-dom";
+import { signOut } from "firebase/auth";
+import { useState, useRef, useEffect } from "react";
 
-export default function PublicQueue() {
-    const [tickets, setTickets] = useState<Ticket[]>([]);
-    const [services, setServices] = useState<Service[]>([]);
-    const [now, setNow] = useState(() => Date.now());
+import { useAuth } from "../../features/auth/context/AuthContext";
+import { auth } from "../services/firebaseService";
 
-    // Reloj para cronómetro
-    useEffect(() => {
-        document.body.style.background = "black";
-        const interval = setInterval(() => {
-            setNow(Date.now());
-        }, 1000);
-        return () => clearInterval(interval);
-    }, []);
+import { useSettings } from "../../features/settings/hooks/useSettings";
 
-    // TURNOS EN TIEMPO REAL
-    useEffect(() => {
-        return subscribeToTickets(setTickets);
-    }, []);
+export default function Navbar() {
 
-    // SERVICIOS
-    useEffect(() => {
-        return subscribeToServices(setServices);
-    }, []);
+    const { user } = useAuth();
+    const { companyName } = useSettings();
 
-    const servicesMap = useMemo(() => {
-        return services.reduce<Record<string, string>>((acc, s) => {
-            acc[s.id] = s.name;
-            return acc;
-        }, {});
-    }, [services]);
+    const [open, setOpen] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
 
-    const current = tickets.find(t => t.status === "in_progress");
-    const next = tickets.filter(t => t.status === "waiting").slice(0, 5);
-
-    // Tiempo transcurrido
-    const getElapsed = (start?: Timestamp) => {
-        if (!start) return "";
-        const diff = Math.floor((now - start.toDate().getTime()) / 1000);
-        const min = Math.floor(diff / 60);
-        const sec = diff % 60;
-        return `${min}:${sec.toString().padStart(2, "0")}`;
+    const handleLogout = async () => {
+        await signOut(auth);
     };
 
+    const getInitial = () => {
+        if (user?.email) return user.email.charAt(0).toUpperCase();
+        return "U";
+    };
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (
+                dropdownRef.current &&
+                !dropdownRef.current.contains(event.target as Node)
+            ) {
+                setOpen(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
     return (
-        <div className="min-h-screen bg-gray-700 text-white flex flex-col p-10">
+        <nav className="bg-white shadow px-6 py-3 flex justify-between items-center">
 
-            {/* ATENDIENDO */}
-            <div className="mb-10 text-center">
-                <h1 className="text-4xl font-bold tracking-widest text-gray-300 mb-4">
-                    ✂️ ATENDIENDO AHORA
-                </h1>
+            {/* Left */}
+            <div className="flex items-center gap-6">
+                <Link to="/" className="font-bold text-lg">
+                    💈 {companyName}
+                </Link>
 
-                {current ? (
-                    <div className="bg-green-400 rounded-3xl p-10 shadow-xl">
-                        <h2 className="text-6xl font-extrabold">
-                            {current.client_name}
-                        </h2>
-                        <p className="text-2xl mt-2 opacity-90">
-                            {servicesMap[current.service_id]}
-                        </p>
-                        <p className="mt-4 text-xl">
-                            ⏱ {getElapsed((current as Ticket & { time_start?: Timestamp }).time_start)}
-                        </p>
+            </div>
+
+            {/* Right */}
+            <div className="relative" ref={dropdownRef}>
+
+                {!user ? (
+                    <Link
+                        to="/login"
+                        className="text-sm font-semibold bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 "
+                    >
+                        Iniciar sesión
+                    </Link>
+                ) : (
+                    <>
+                        <button
+                            onClick={() => setOpen(!open)}
+                            className="cursor-pointer w-9 h-9 rounded-full bg-gray-900 text-white flex items-center justify-center font-bold hover:scale-105 transition"
+                        >
+                            {user.photoURL ? (
+                                <img
+                                    src={user.photoURL}
+                                    alt="avatar"
+                                    className="w-full h-full object-cover"
+                                />
+                            ) : (
+                                getInitial()
+                            )}
+                        </button>
                         
-                    </div>
-                ) : (
-                    <p className="text-3xl text-gray-400">
-                        No hay nadie siendo atendido
-                    </p>
-                )}
-            </div>
+                        <div
+                            className={`absolute right-0 mt-2 w-52 bg-white border rounded-xl shadow-lg p-2 z-50 transition-all duration-200 origin-top-right
+                            ${open ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"}`}
+                        >
 
-            {/* SIGUIENTES */}
-            <div>
-                <h2 className="text-3xl font-semibold mb-4 text-gray-300">
-                    🕒 SIGUIENTES EN COLA
-                </h2>
-
-                {next.length === 0 ? (
-                    <p className="text-2xl text-gray-400">
-                        No hay clientes en espera
-                    </p>
-                ) : (
-                    <ul className="space-y-4">
-                        {next.map((t, i) => (
-                            <li
-                                key={t.id}
-                                className="bg-gray-800 rounded-xl p-6 flex justify-between items-center text-2xl"
+                            <div className="px-3 py-2 border-b">
+                                <p className="text-sm font-semibold truncate">
+                                    {user.displayName || user.email}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                    {user.role}
+                                </p>
+                            </div>
+                            <Link
+                                to="/"
+                                className="block px-3 py-2 text-sm hover:bg-gray-100 rounded transition"
+                                onClick={() => setOpen(false)}
                             >
-                                <span>
-                                    {i + 1}. {t.client_name}
-                                </span>
-                                <span className="opacity-80">
-                                    {servicesMap[t.service_id]}
-                                </span>
-                            </li>
-                        ))}
-                    </ul>
+                                Turnos
+                            </Link>
+
+                            {user.role === "admin" && (
+                                <>
+                                    <Link
+                                        to="/dashboard"
+                                        className="block px-3 py-2 text-sm hover:bg-gray-100 rounded transition"
+                                        onClick={() => setOpen(false)}
+                                    >
+                                        Dashboard
+                                    </Link>
+                                    <Link
+                                        to="/admin"
+                                        className="block px-3 py-2 text-sm hover:bg-gray-100 rounded transition"
+                                        onClick={() => setOpen(false)}
+                                    >
+                                        Panel Admin
+                                    </Link>
+                                </>
+                            )}
+
+                            <button
+                                onClick={handleLogout}
+                                className="cursor-pointer w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-gray-100 rounded transition"
+                            >
+                                Cerrar sesión
+                            </button>
+                        </div>
+
+                    </>
                 )}
             </div>
-        </div>
+        </nav>
     );
 }
 </file>
@@ -2689,9 +2970,399 @@ export default function PublicQueue() {
 }
 </file>
 
+<file path="src/features/dashboard/hooks/useDashboard.ts">
+import { useEffect, useState, useMemo } from "react";
+import { getRecentTickets } from "../services/dashboardService";
+
+import { subscribeToServices } from "../../tickets/services/servicesService";
+import type { Service } from "../../tickets/types";
+
+let cache: any = null;
+let lastFetch = 0;
+const CACHE_TIME = 1000 * 60 * 5; // 5 minutos
+
+type FilterType = "today" | "week" | "month" | "lastSevenDays";
+
+export function useDashboard() {
+    const [data, setData] = useState<any[]>([]);
+    const [filter, setFilter] = useState<FilterType>("today");
+    const [loading, setLoading] = useState(true);
+
+    const [services, setServices] = useState<Service[]>([]);
+
+    const servicesMap = useMemo(
+        () => Object.fromEntries(
+            services.map(s => [s.id, { name: s.name, price: s.price }])
+        ),
+        [services]
+    );
+
+    useEffect(() => {
+
+        if (cache && Date.now() - lastFetch < CACHE_TIME) {
+            setData(cache);
+            setLoading(false);
+            return;
+        }
+
+        const load = async () => {
+            const res = await getRecentTickets();
+            cache = res;
+            lastFetch = Date.now();
+            setData(res);
+            setLoading(false)
+        };
+
+        load();
+
+        const unsubServices = subscribeToServices(setServices);
+        return () => {
+            unsubServices();
+        };
+
+    }, []);
+
+    const filteredData = useMemo(() => {
+        const now = new Date();
+
+        return data.filter(t => {
+            if (!t.finished_at) return false;
+
+            const date = t.finished_at.toDate();
+
+            if (filter === "today") {
+                return date.toDateString() === now.toDateString();
+            }
+
+            if (filter === "lastSevenDays") {
+                const weekAgo = new Date();
+                weekAgo.setDate(now.getDate() - 7);
+                return date >= weekAgo;
+            }
+
+            if (filter === "week") {
+                const startOfWeek = new Date(now);
+                const day = startOfWeek.getDay();
+                const diff = day === 0 ? -6 : 1 - day;
+
+                startOfWeek.setDate(now.getDate() + diff);
+                startOfWeek.setHours(0, 0, 0, 0);
+
+                return date >= startOfWeek;
+            }
+
+            if (filter === "month") {
+                const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+                return date >= startOfMonth;
+            }
+
+            return true;
+        });
+    }, [data, filter]);
+
+    const stats = useMemo(() => {
+        const total = filteredData.reduce((acc, t) => acc + (t.price || 0), 0);
+        const count = filteredData.length;
+        const average = count ? total / count : 0;
+
+        return {
+            total: Number(total) || 0,
+            count: Number(count) || 0,
+            average: Number(average) || 0
+        };
+    }, [filteredData, servicesMap]);
+
+    const incomeChart = useMemo(() => {
+        const map: Record<string, number> = {};
+
+        filteredData.forEach(t => {
+            const date = t.finished_at.toDate();
+            let key = "";
+
+            if (filter === "today") {
+                key = `${date.getHours()}:00`;
+            }
+
+            if (filter === "week" || filter === "month") {
+                key = date.toLocaleDateString("es-CO", {
+                    day: "2-digit",
+                    month: "2-digit"
+                });
+            }
+
+            map[key] = (map[key] || 0) + (t.price || 0);
+        });
+
+        return Object.entries(map).map(([label, value]) => ({
+            label,
+            value
+        }));
+    }, [filteredData, filter]);
+
+    const servicesChart = useMemo(() => {
+        const map: Record<string, number> = {};
+
+        filteredData.forEach(t => {
+            const service = servicesMap[t.service_id]?.name || "Servicio";
+
+            map[service] = (map[service] || 0) + 1;
+        });
+
+        return Object.entries(map).map(([name, count]) => ({
+            name,
+            count
+        }));
+    }, [filteredData, servicesMap]);
+
+    const incomeByService = useMemo(() => {
+        const map: Record<string, number> = {};
+
+        filteredData.forEach(t => {
+            const service = servicesMap[t.service_id]?.name || "Servicio";
+            map[service] = (map[service] || 0) + (t.price || 0);
+        });
+
+        return Object.entries(map).map(([name, value]) => ({
+            name,
+            value
+        }));
+    }, [filteredData, servicesMap]);
+
+    const paymentStats = useMemo(() => {
+        let cashTotal = 0;
+        let nequiTotal = 0;
+        let cashCount = 0;
+        let nequiCount = 0;
+
+        filteredData.forEach(t => {
+            if (!t.payment_method) return;
+
+            if (t.payment_method === "cash") {
+                cashTotal += t.price || 0;
+                cashCount++;
+            }
+
+            if (t.payment_method === "nequi") {
+                nequiTotal += t.price || 0;
+                nequiCount++;
+            }
+        });
+
+        return {
+            cashTotal,
+            nequiTotal,
+            cashCount,
+            nequiCount
+        };
+    }, [filteredData]);
+
+    return {
+        stats,
+        filter,
+        setFilter,
+        loading,
+        incomeChart,
+        servicesChart,
+        incomeByService,
+        paymentStats
+    };
+}
+</file>
+
+<file path="src/pages/Dashboard.tsx">
+import StatsCard from "../features/dashboard/components/StatsCard";
+import FilterTabs from "../features/dashboard/components/FilterTabs";
+
+import IncomeChart from "../features/dashboard/components/IncomeChart";
+import ServicesChart from "../features/dashboard/components/ServicesChart";
+import IncomeByService from "../features/dashboard/components/IncomeByServiceChart";
+import PaymentsChart from "../features/dashboard/components/PaymentsMethodChart";
+
+import { useDashboard } from "../features/dashboard/hooks/useDashboard";
+
+import { formatCOP } from "../shared/utils/currency";
+
+export default function Dashboard() {
+    const { stats, loading, filter, setFilter, incomeChart, servicesChart, incomeByService, paymentStats } = useDashboard();
+
+    if (loading) return <p className="p-6">Cargando...</p>;
+
+    return (
+        <div className="min-h-screen bg-gray-100 p-6 items-stretch">
+            <h3 className="text-2xl font-bold text-gray-900">
+                📊 Dashboard
+            </h3>
+            <p className="text-sm text-gray-500">
+                Resumen de ingresos y servicios
+            </p>
+
+            <div className="mb-6 flex justify-center">
+                <FilterTabs filter={filter} setFilter={setFilter} />
+            </div>
+
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <StatsCard
+                    title="Total"
+                    value={`$ ${formatCOP(stats.total || 0)}`}
+                />
+                <StatsCard
+                    title="Servicios"
+                    value={String(stats.count)}
+                />
+                <StatsCard
+                    title="Promedio"
+                    value={`$ ${formatCOP(stats.average || 0)}`}
+                />
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6 mt-5">
+                <IncomeChart data={incomeChart} />
+                <ServicesChart data={servicesChart} />
+                <IncomeByService data={incomeByService} />
+                <PaymentsChart data={paymentStats} />
+            </div>
+
+        </div>
+    );
+}
+</file>
+
+<file path="src/pages/PublicQueue.tsx">
+import { useEffect } from "react";
+
+import { useTickets } from "../features/tickets/hooks/useTickets";
+import { useSettings } from "../features/settings/hooks/useSettings";
+
+export default function PublicQueue() {
+    //const [services, setServices] = useState<Service[]>([]);
+    //const [now, setNow] = useState(() => Date.now());
+
+    const { tickets, current } = useTickets();
+    const { companyName, isOpen } = useSettings();
+
+    const waiting = tickets.filter(t => t.status === "waiting");
+
+    useEffect(() => {
+        if (current) {
+            if (!current) return;
+
+            const audio = new Audio("/notification.mp3");
+            audio.play();
+        }
+    }, [current?.id]);
+
+    // Reloj para cronómetro
+    /* useEffect(() => {
+        document.body.style.background = "black";
+        const interval = setInterval(() => {
+            setNow(Date.now());
+        }, 1000);
+        return () => clearInterval(interval);
+    }, []); */
+
+    // TURNOS EN TIEMPO REAL
+    /* useEffect(() => {
+        return subscribeToTickets(setTickets);
+    }, []); */
+
+    // SERVICIOS
+    /* useEffect(() => {
+        return subscribeToServices(setServices);
+    }, []); */
+
+    /* const servicesMap = useMemo(() => {
+        return services.reduce<Record<string, string>>((acc, s) => {
+            acc[s.id] = s.name;
+            return acc;
+        }, {});
+    }, [services]); */
+
+    //const current = tickets.find(t => t.status === "in_progress");
+    //const next = tickets.filter(t => t.status === "waiting").slice(0, 5);
+
+    // Tiempo transcurrido
+    /* const getElapsed = (start?: Timestamp) => {
+        if (!start) return "";
+        const diff = Math.floor((now - start.toDate().getTime()) / 1000);
+        const min = Math.floor(diff / 60);
+        const sec = diff % 60;
+        return `${min}:${sec.toString().padStart(2, "0")}`;
+    }; */
+
+    return (
+        <div className="min-h-screen bg-black text-white p-8">
+
+            {/* Header */}
+            <div className="flex justify-between items-center mb-10">
+                <h1 className="text-4xl font-bold">💈 {companyName}</h1>
+
+                <span className={`text-xl font-semibold ${isOpen ? "text-green-400" : "text-red-400"}`}>
+                    {isOpen ? "🟢 Abierto" : "🔴 Cerrado"}
+                </span>
+            </div>
+
+            {/* Turno actual */}
+            <div className="text-center mb-10">
+                <p className="text-2xl opacity-70">Atendiendo</p>
+
+                <h2 className="text-6xl font-bold mt-2">
+                    {current?.clientNameFormatted || "---"}
+                </h2>
+
+                <p className="text-2xl opacity-80 mt-2">
+                    {current?.serviceName || ""}
+                </p>
+            </div>
+
+            {/* Siguientes */}
+            <div className="mt-10">
+                <p className="text-2xl mb-4 opacity-70">En espera</p>
+
+                <div className="grid grid-cols-3 gap-6">
+                    {waiting.length === 0 ? (
+                        <p className="text-center text-gray-500 col-span-3">
+                            No hay turnos en espera
+                        </p>
+                    ) : (
+                        waiting.map((t, index) => {
+                            const isNext = index === 0;
+                            return (
+                                <div
+                                    key={t.id}
+                                    className={`
+                                            rounded-xl p-4 text-center transition-all duration-300
+                                            ${isNext
+                                            ? "bg-yellow-400/20 border-2 border-yellow-400 scale-105 animate-pulse"
+                                            : "bg-white/10"
+                                        }
+            `}
+                                >
+                                    <p className="text-sm opacity-70">
+                                        Turno #{index + 1}
+                                    </p>
+
+                                    <p className="text-2xl font-semibold">
+                                        {t.clientNameFormatted}
+                                    </p>
+
+                                    <p className="text-sm opacity-70">
+                                        {t.serviceName}
+                                    </p>
+                                </div>
+                            )
+                        })
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}
+</file>
+
 <file path="src/App.tsx">
 import './App.css'
-import { Routes, Route, } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 
 import Home from './pages/Home';
 import Dashboard from "./pages/Dashboard";
@@ -2707,15 +3378,18 @@ import Navbar from "./shared/components/Navbar";
 
 function App() {
 
-  const params = new URLSearchParams(window.location.search);
-  const isTV = params.has("tv");
+  const location = useLocation();
+
+  const isTV =
+    location.pathname === "/tv" ||
+    new URLSearchParams(location.search).has("tv");
 
   if (isTV) return <PublicQueue />;
 
   return (
     <>
-      <Navbar />
-
+      {!isTV && <Navbar />}
+      
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/tv" element={<PublicQueue />} />

@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 
-import { subscribeToServices } from "../features/tickets/services/servicesService";
 import { useTickets } from "../features/tickets/hooks/useTickets";
 import { useSettings } from "../features/settings/hooks/useSettings";
 
