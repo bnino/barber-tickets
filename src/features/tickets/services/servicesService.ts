@@ -3,11 +3,7 @@ import {
     collection, 
     onSnapshot, 
     orderBy, 
-    query,
-    addDoc,
-    getDocs,
-    updateDoc,
-    doc
+    query
 } from "firebase/firestore";
 import type { Service } from "../types";
 

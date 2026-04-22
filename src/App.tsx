@@ -8,12 +8,17 @@ import Admin from "./pages/Admin";
 import Login from "./pages/Login";
 import Register from './pages/Register';
 
+import { useAnnouncements } from "./features/announcements/hooks/useAnnouncements";
+import AnnouncementModal from "./shared/components/AnnouncementModal";
+
 import ProtectedRoute from "./features/auth/components/ProtectedRoute";
 import PublicRoute from "./features/auth/components/PublicRoute";
 
 import Navbar from "./shared/components/Navbar";
 
 function App() {
+
+  const announcements = useAnnouncements();
 
   const location = useLocation();
 
@@ -26,7 +31,11 @@ function App() {
   return (
     <>
       {!isTV && <Navbar />}
-      
+
+      {announcements.map(a => (
+        <AnnouncementModal key={a.id} announcement={a} />
+      ))}
+
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/tv" element={<PublicQueue />} />

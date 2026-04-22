@@ -1,9 +1,14 @@
+import { useState } from "react";
+
 import { useSettingsForm } from "../features/settings/hooks/useSettingsForm";
+
 import { useAlert } from "../features/tickets/hooks/useAlert";
 
 import UsersTable from "../features/users/components/UsersTable";
 
 import ServiceList from "../features/services/components/ServiceList";
+
+import CreateAnnouncementModal from "../features/announcements/components/CreateAnnouncementModal";
 
 const DAYS = [
     "lunes",
@@ -17,6 +22,8 @@ const DAYS = [
 
 export default function Admin() {
     const alert = useAlert();
+
+    const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
 
     const {
         companyName,
@@ -35,6 +42,16 @@ export default function Admin() {
                 <h1 className="text-xl font-bold mb-6">
                     ⚙️ Configuración del negocio
                 </h1>
+
+                <button
+                    onClick={async () => {
+
+                        setShowAnnouncementModal(true);
+                    }}
+                    className="px-4 py-2 rounded-lg bg-blue-900 text-white font-semibold transition hover:bg-blue-600 cursor-pointer"
+                >
+                    Crear anuncio
+                </button>
 
                 <div className="bg-gray-50 p-4 rounded-xl border">
                     <label className="text-sm font-semibold">Nombre del negocio</label>
@@ -100,6 +117,12 @@ export default function Admin() {
                     <UsersTable />
                 </div>
             </div>
+
+            {showAnnouncementModal && (
+                <CreateAnnouncementModal
+                    onClose={() => setShowAnnouncementModal(false)}
+                />
+            )}
 
         </div >
     );
