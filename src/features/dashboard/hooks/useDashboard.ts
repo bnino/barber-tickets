@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { getRecentTickets } from "../services/dashboardService";
 
 import { subscribeToServices } from "../../tickets/services/servicesService";
-import type { Service } from "../../tickets/types";
+import type { Service } from "../../../shared/types";
 
 let cache: any = null;
 let lastFetch = 0;

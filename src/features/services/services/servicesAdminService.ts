@@ -7,9 +7,7 @@ export const createService = async (data: { name: string; price: number }) => {
     }
     const res = await addDoc(collection(db, "services"), data);
 
-    console.log(res);
-
-    //return res;
+    return res;
 };
 
 export const updateService = async (

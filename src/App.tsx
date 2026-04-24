@@ -62,6 +62,11 @@ function App() {
             </ProtectedRoute>
           } />
       </Routes>
+      <p className="text-sm text-gray-500 mt-6 text-end mb-4 mr-4">
+        Desarrollado por <a href="https://github.com/bnino" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
+          Brayan Niño
+        </a>
+      </p>
     </>
   )
 }

@@ -51,8 +51,8 @@ export default function CreateAnnouncementModal({ onClose }: Props) {
 
     await createAnnouncement({
       message,
-      start_date: Timestamp.fromDate(new Date(startDate)),
-      end_date: Timestamp.fromDate(new Date(endDate)),
+      startDate: Timestamp.fromDate(new Date(startDate)),
+      endDate: Timestamp.fromDate(new Date(endDate)),
       type: "info"
     });
 

@@ -1,8 +1,6 @@
-import type { Service } from "../types";
 
 import { memo } from "react";
-
-import { sanitizeName } from "../../../shared/utils/sanitize";
+import type { Service } from "../../../shared/types";
 
 type Props = {
     clientName: string;

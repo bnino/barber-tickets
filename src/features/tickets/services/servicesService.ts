@@ -1,11 +1,13 @@
 import { db } from "../../../shared/services/firebaseService";
+
+import type { Service } from "../../../shared/types";
+
 import { 
     collection, 
     onSnapshot, 
     orderBy, 
     query
 } from "firebase/firestore";
-import type { Service } from "../types";
 
 export const subscribeToServices = (callback: (services: Service[]) => void) => {
 

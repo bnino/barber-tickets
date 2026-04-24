@@ -1,12 +1,12 @@
-import type { EnrichedTicket } from "../types";
 
 import { TICKET_STATUS } from "../constants/tickets";
 
 
 import { memo } from "react";
+import type { Ticket } from "../../../shared/types";
 
 type Props = {
-    tickets: EnrichedTicket[];
+    tickets: Ticket[];
     servicesMap: Record<string, { name: string; price: number }>;
     onStart: (id: string) => void;
     hasActiveService: boolean;
@@ -23,6 +23,7 @@ function TicketTable({
 }: Props) {
     return (
         <div className="relative -mx-4 sm:mx-0 overflow-x-auto">
+            
             <table className="min-w-162.5 w-full divide-y divide-gray-200 bg-white table-fixed">
                 <thead className="bg-gray-100">
                     <tr>
