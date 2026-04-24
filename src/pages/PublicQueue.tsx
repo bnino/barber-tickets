@@ -4,8 +4,6 @@ import { useTickets } from "../features/tickets/hooks/useTickets";
 import { useSettings } from "../features/settings/hooks/useSettings";
 
 export default function PublicQueue() {
-    //const [services, setServices] = useState<Service[]>([]);
-    //const [now, setNow] = useState(() => Date.now());
 
     const { tickets, current } = useTickets();
     const { companyName, isOpen } = useSettings();
@@ -20,44 +18,6 @@ export default function PublicQueue() {
             audio.play();
         }
     }, [current?.id]);
-
-    // Reloj para cronómetro
-    /* useEffect(() => {
-        document.body.style.background = "black";
-        const interval = setInterval(() => {
-            setNow(Date.now());
-        }, 1000);
-        return () => clearInterval(interval);
-    }, []); */
-
-    // TURNOS EN TIEMPO REAL
-    /* useEffect(() => {
-        return subscribeToTickets(setTickets);
-    }, []); */
-
-    // SERVICIOS
-    /* useEffect(() => {
-        return subscribeToServices(setServices);
-    }, []); */
-
-    /* const servicesMap = useMemo(() => {
-        return services.reduce<Record<string, string>>((acc, s) => {
-            acc[s.id] = s.name;
-            return acc;
-        }, {});
-    }, [services]); */
-
-    //const current = tickets.find(t => t.status === "in_progress");
-    //const next = tickets.filter(t => t.status === "waiting").slice(0, 5);
-
-    // Tiempo transcurrido
-    /* const getElapsed = (start?: Timestamp) => {
-        if (!start) return "";
-        const diff = Math.floor((now - start.toDate().getTime()) / 1000);
-        const min = Math.floor(diff / 60);
-        const sec = diff % 60;
-        return `${min}:${sec.toString().padStart(2, "0")}`;
-    }; */
 
     return (
         <div className="min-h-screen bg-black text-white p-8">

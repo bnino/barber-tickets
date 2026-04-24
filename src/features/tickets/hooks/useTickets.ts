@@ -2,8 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 
 import { capitalizeWords } from "../../../shared/utils/format";
 import type { ApiResponse } from "../../../shared/types/apiResponse";
+import { handleError } from "../../../shared/utils/errorHandler";
+import type { Service, Ticket } from "../../../shared/types";
 
 import { TICKET_STATUS } from "../constants/tickets";
+import { subscribeToServices } from "../services/servicesService";
 
 import {
     subscribeToTickets,
@@ -12,9 +15,6 @@ import {
     finishService,
     markNoShow
 } from "../services/ticketService";
-import { subscribeToServices } from "../services/servicesService";
-import type { Ticket, Service } from "../types";
-import { handleError } from "../../../shared/utils/errorHandler";
 
 export function useTickets() {
     const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -23,7 +23,7 @@ export function useTickets() {
 
     const servicesMap = useMemo<Record<string, { name: string; price: number }>>(
         () => Object.fromEntries(
-            services.map(s => [s.id, {name: s.name, price: s.price}])
+            services.map(s => [s.id, { name: s.name, price: s.price }])
         ),
         [services]
     );
@@ -31,7 +31,9 @@ export function useTickets() {
     const enrichedTickets = useMemo(() => {
         return tickets.map(t => ({
             ...t,
-            clientNameFormatted: capitalizeWords(t.client_name),
+            clientNameFormatted: t.client_name
+                ? capitalizeWords(t.client_name)
+                : "Sin nombre",
             serviceName: servicesMap[t.service_id]?.name ?? "—"
         }));
     }, [tickets, servicesMap]);
@@ -50,7 +52,7 @@ export function useTickets() {
     // Derivados
     const current = useMemo(
         () => enrichedTickets.find(t => t.status === TICKET_STATUS.IN_PROGRESS),
-        [tickets]
+        [enrichedTickets]
     );
 
     const hasActiveService = Boolean(current);
@@ -103,7 +105,7 @@ export function useTickets() {
             setLoadingId(null);
         }
     };
-
+    
     return {
         tickets: enrichedTickets,
         services,

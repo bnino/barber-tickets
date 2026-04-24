@@ -1,73 +1,75 @@
-# React + TypeScript + Vite
+# 💈 BarberApp
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Sistema de gestión de turnos y servicios para barberías, diseñado como una aplicación moderna tipo SaaS.
 
-Currently, two official plugins are available:
+## 🚀 Características
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- 📅 Gestión de turnos en tiempo real
+- ✂️ CRUD de servicios (nombre, precio)
+- 📊 Dashboard con métricas y gráficas
+- 📺 Vista TV para mostrar turnos en espera
+- 🔐 Autenticación con Firebase (Google + Email)
+- 👤 Sistema de roles (admin / user)
+- ⚙️ Configuración del negocio
+- 📢 Sistema de anuncios temporales
+- 💰 Registro de pagos (efectivo / Nequi)
 
-## React Compiler
+---
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 🧠 Tecnologías
 
-## Expanding the ESLint configuration
+- React + TypeScript
+- TailwindCSS
+- Firebase (Auth + Firestore)
+- Recharts
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+---
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## 📁 Estructura
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+src/
+├── features/
+│ ├── auth/
+│ ├── tickets/
+│ ├── dashboard/
+│ ├── services/
+│ ├── settings/
+│ └── announcements/
+│
+├── pages/
+│ ├── Home.tsx
+│ ├── Dashboard.tsx
+│ ├── Admin.tsx
+│ ├── PublicQueue.tsx
+│ ├── Login.tsx
+│ └── Register.tsx
+│
+├── shared/
+│ ├── components/
+│ ├── hooks/
+│ └── utils/
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+---
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## ⚙️ Configuración
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+1. Clonar repositorio
+
+```bash
+git clone <https://github.com/bnino/barber-tickets.git>
+cd barber-tickets
+
+2. Instalar dependencias
+
+npm install
+
+3. Configurar Firebase
+
+Crear archivo:
+
+src/shared/services/firebaseService.ts
+
+4. Ejecutar proyecto
+
+npm run dev

@@ -1,5 +1,6 @@
 import { db } from "../../../shared/services/firebaseService";
-import type { Ticket } from "../types";
+
+import type { Ticket } from "../../../shared/types";
 
 import {
     collection,

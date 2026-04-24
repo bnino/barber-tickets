@@ -1,15 +1,15 @@
 import { db } from "../../../shared/services/firebaseService";
 
-import type { Announcement } from "../types/announcements";
-
 import {
   collection,
   addDoc,
   serverTimestamp,
   query,
   where,
-  onSnapshot
+  onSnapshot,
+  Timestamp
 } from "firebase/firestore";
+import type { Announcement } from "../../../shared/types";
 
 export async function createAnnouncement(data: Announcement) {
   return await addDoc(collection(db, "announcements"), {
@@ -20,23 +20,30 @@ export async function createAnnouncement(data: Announcement) {
 }
 
 export function subscribeToActiveAnnouncements(callback: (data: Announcement[]) => void) {
-  
+
   const q = query(
     collection(db, "announcements"),
     where("active", "==", true)
   );
-  
+
   return onSnapshot(q, (snap) => {
     const now = new Date();
 
-    const data = snap.docs
-      .map(doc => ({ 
-        id: doc.id, 
+    const data: Announcement[] = snap.docs
+      .map(doc => ({
+        id: doc.id,
         ...(doc.data() as Omit<Announcement, "id">)
       }))
       .filter(a => {
-        const start = a.start_date.toDate();
-        const end = a.end_date.toDate();
+        if (!a.startDate || !a.endDate) return false;
+
+        const start = a.startDate instanceof Timestamp
+          ? a.startDate.toDate()
+          : new Date(a.startDate);
+
+        const end = a.endDate instanceof Timestamp
+          ? a.endDate.toDate()
+          : new Date(a.endDate);
         return now >= start && now <= end;
       });
 
