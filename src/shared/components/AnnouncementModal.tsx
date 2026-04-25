@@ -1,13 +1,16 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import type { Announcement } from "../types";
 
-export default function AnnouncementModal({ announcement }: any) {
+
+export default function AnnouncementModal({ announcement }: { announcement: Announcement}) {
 
   const [open, setOpen] = useState(true);
 
-  const today = new Date().toDateString();
+  const today = useMemo(() => new Date().toDateString(), []);
 
-  const lastSeen = localStorage.getItem(
-    "seen_announcement_" + announcement.id
+  const lastSeen = useMemo(
+    () => localStorage.getItem("seen_announcement_" + announcement.id),
+    [announcement.id]
   );
 
   const handleClose = () => {

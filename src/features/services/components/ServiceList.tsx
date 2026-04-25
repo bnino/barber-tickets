@@ -4,12 +4,14 @@ import ServiceModal from "./ServiceModal";
 import { useAlert } from "../../tickets/hooks/useAlert";
 import { formatCOP } from "../../../shared/utils/currency";
 
+import type { Service } from "../../../shared/types";
+
 export default function ServiceList() {
     const { services, createService, updateService, deleteService } = useServices();
     const alert = useAlert();
 
     const [showModal, setShowModal] = useState(false);
-    const [editingService, setEditingService] = useState<any>(null);
+    const [editingService, setEditingService] = useState<Service | null>(null);
 
     return (
         <div>
@@ -76,7 +78,7 @@ export default function ServiceList() {
                 isEditing={!!editingService}
                 onSubmit={async (data) => {
                     if (editingService) {
-                        await updateService(editingService.id, data);
+                        await updateService(editingService.id!, data);
                     } else {
                         await createService(data);
                     }

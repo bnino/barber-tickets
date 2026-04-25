@@ -1,11 +1,7 @@
 import { useEffect, useState } from "react";
 import { subscribeToSettings } from "../services/settingsService";
 
-type Settings = {
-    company_name: string;
-    is_open: boolean;
-    working_days: any[];
-};
+import type { Settings } from "../../../shared/types";
 
 export function useSettings() {
     const [settings, setSettings] = useState<Settings | null>(null);

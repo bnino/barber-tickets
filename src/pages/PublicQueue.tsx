@@ -11,12 +11,12 @@ export default function PublicQueue() {
     const waiting = tickets.filter(t => t.status === "waiting");
 
     useEffect(() => {
-        if (current) {
-            if (!current) return;
 
-            const audio = new Audio("/notification.mp3");
-            audio.play();
-        }
+        if (!current) return;
+
+        const audio = new Audio("/notification.mp3");
+        audio.play().catch(() => {});
+
     }, [current?.id]);
 
     return (

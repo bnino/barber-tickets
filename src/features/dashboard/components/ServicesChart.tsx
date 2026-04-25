@@ -31,18 +31,15 @@ export default function ServicesChart({ data }: Props) {
                     description="Aquí verás cuáles servicios son más solicitados"
                 />
             ) : (
-                <div className="h-64" >
-                    <ResponsiveContainer width="100%" height={250}>
-                        <BarChart data={data}>
-                            <XAxis dataKey="name" />
-                            <YAxis />
-                            <Tooltip content={<ChartTooltip />} />
-                            <Bar dataKey="count"
-                                shape={<CustomBar />} />
-
-                        </BarChart>
-                    </ResponsiveContainer>
-                </div>
+                <ResponsiveContainer width="100%" height={256}>
+                    <BarChart data={data}>
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip content={<ChartTooltip />} />
+                        <Bar dataKey="count"
+                            shape={<CustomBar />} />
+                    </BarChart>
+                </ResponsiveContainer>
             )}
 
             <div className="mt-3 flex flex-wrap gap-2 text-xs">

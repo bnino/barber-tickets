@@ -14,8 +14,6 @@ type Props = {
     data: { label: string; value: number }[];
 };
 
-
-
 export default function IncomeChart({ data }: Props) {
     return (
         <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 w-full min-h-75">
@@ -28,16 +26,14 @@ export default function IncomeChart({ data }: Props) {
                     description="Los ingresos aparecerán cuando finalices servicios"
                 />
             ) : (
-                <div className="h-64" >
-                    <ResponsiveContainer width="100%" height={250}>
-                        <LineChart data={data}>
-                            <XAxis dataKey="label" />
-                            <YAxis />
-                            <Tooltip content={<ChartTooltip />} />
-                            <Line type="monotone" dataKey="value" strokeWidth={3} />
-                        </LineChart>
-                    </ResponsiveContainer>
-                </div>
+                <ResponsiveContainer width="100%" height={256}>
+                    <LineChart data={data}>
+                        <XAxis dataKey="label" />
+                        <YAxis />
+                        <Tooltip content={<ChartTooltip />} />
+                        <Line type="monotone" dataKey="value" strokeWidth={3} />
+                    </LineChart>
+                </ResponsiveContainer>
             )}
         </div>
     );

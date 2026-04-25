@@ -1,9 +1,9 @@
 
 import { TICKET_STATUS } from "../constants/tickets";
 
-
 import { memo } from "react";
 import type { Ticket } from "../../../shared/types";
+import type { AppUser } from "../../auth/context/AuthContext";
 
 type Props = {
     tickets: Ticket[];
@@ -11,7 +11,7 @@ type Props = {
     onStart: (id: string) => void;
     hasActiveService: boolean;
     loadingId: string | null;
-    user: any;
+    user: AppUser | null;
 };
 
 function TicketTable({

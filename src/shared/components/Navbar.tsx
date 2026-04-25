@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { signOut } from "firebase/auth";
 import { useState, useRef, useEffect } from "react";
 
@@ -9,20 +9,11 @@ import { useSettings } from "../../features/settings/hooks/useSettings";
 
 export default function Navbar() {
 
+    const location = useLocation();
     const { user } = useAuth();
     const { companyName } = useSettings();
-
     const [open, setOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
-
-    const handleLogout = async () => {
-        await signOut(auth);
-    };
-
-    const getInitial = () => {
-        if (user?.email) return user.email.charAt(0).toUpperCase();
-        return "U";
-    };
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -37,6 +28,17 @@ export default function Navbar() {
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
+
+    if (location.pathname === "/tv") return null;
+
+    const handleLogout = async () => {
+        await signOut(auth);
+    };
+
+    const getInitial = () => {
+        if (user?.email) return user.email.charAt(0).toUpperCase();
+        return "U";
+    };
 
     return (
         <nav className="bg-white shadow px-6 py-3 flex justify-between items-center">
@@ -63,19 +65,23 @@ export default function Navbar() {
                     <>
                         <button
                             onClick={() => setOpen(!open)}
-                            className="cursor-pointer w-9 h-9 rounded-full bg-gray-900 text-white flex items-center justify-center font-bold hover:scale-105 transition"
+                            className="cursor-pointer w-9 h-9 rounded-full bg-gray-900 text-white flex items-center justify-center font-bold hover:scale-105 transition overflow-hidden"
                         >
                             {user.photoURL ? (
                                 <img
                                     src={user.photoURL}
                                     alt="avatar"
-                                    className="w-full h-full object-cover"
+                                    referrerPolicy="no-referrer"
+                                    className="w-full h-full object-cover rounded-full"
+                                    onError={(e) => {              
+                                        e.currentTarget.style.display = "none";
+                                    }}
                                 />
                             ) : (
                                 getInitial()
                             )}
                         </button>
-                        
+
                         <div
                             className={`absolute right-0 mt-2 w-52 bg-white border rounded-xl shadow-lg p-2 z-50 transition-all duration-200 origin-top-right
                             ${open ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"}`}
