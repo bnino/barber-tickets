@@ -1,27 +1,38 @@
 import { createContext, useContext, useEffect, useState } from "react";
+import type { ReactNode } from "react";
+import type { User } from "firebase/auth";
 import { subscribeToAuth, getUserRole } from "../services/authService";
 
-type User = {
+export type AppUser = {
   uid: string;
   email: string | null;
+  displayName: string | null;
+  photoURL: string | null;
   role: "admin" | "user";
 };
 
-const AuthContext = createContext<any>(null);
+type AuthContextType = {
+  user: AppUser | null;
+  loading: boolean;
+};
 
-export function AuthProvider({ children }: any) {
-  const [user, setUser] = useState<User | null>(null);
+const AuthContext = createContext<AuthContextType>({ user: null, loading: true });
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsub = subscribeToAuth(async (firebaseUser) => {
+    const unsub = subscribeToAuth(async (firebaseUser: User | null) => {
       if (firebaseUser) {
         const role = await getUserRole(firebaseUser.uid);
 
         setUser({
           uid: firebaseUser.uid,
           email: firebaseUser.email,
-          role
+          displayName: firebaseUser.displayName,
+          photoURL: firebaseUser.photoURL,
+          role,
         });
       } else {
         setUser(null);

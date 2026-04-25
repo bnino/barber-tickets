@@ -18,16 +18,11 @@ export type Ticket = {
   serviceName?: string;
   status: TicketStatus;
   price?: number; 
-  paymentMethod?: "cash" | "nequi";
+  payment_method?: "cash" | "nequi";
   createdAt: Timestamp;
-  startedAt?: Timestamp;
-  finishedAt: Timestamp;
+  started_at?: Timestamp;
+  finished_at?: Timestamp;
 };
-
-export interface EnrichedTicket extends Ticket {
-    clientNameFormatted: string;
-    serviceName: string;
-}
 
 /* ========================
    SERVICES
@@ -54,9 +49,9 @@ export type UserDB = {
    SETTINGS
 ======================== */
 export type Settings = {
-  companyName: string;
-  isOpen: boolean;
-  workingDays: string[];
+  company_name: string;
+  is_open: boolean;
+  working_days: string[];
 };
 
 /* ========================
@@ -71,3 +66,4 @@ export type Announcement = {
   active?: boolean;
   createdAt?: Timestamp;
 };
+

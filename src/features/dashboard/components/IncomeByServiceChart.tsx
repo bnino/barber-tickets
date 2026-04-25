@@ -28,8 +28,7 @@ export default function IncomeByServiceChart({ data }: Props) {
                     description="Aquí verás cuánto has ganado por cada servicio cerrado"
                 />
             ) : (
-                <div className="h-64" >
-                    <ResponsiveContainer width="100%" height={250}>
+                    <ResponsiveContainer width="100%" height={256}>
                         <BarChart data={data}>
                             <XAxis dataKey="name" />
                             <YAxis />
@@ -38,7 +37,6 @@ export default function IncomeByServiceChart({ data }: Props) {
                                 shape={<CustomBar />} />
                         </BarChart>
                     </ResponsiveContainer>
-                </div>
             )}
 
             <div className="mt-3 flex flex-wrap gap-2 text-xs">

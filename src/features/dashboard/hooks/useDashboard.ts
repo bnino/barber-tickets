@@ -2,16 +2,16 @@ import { useEffect, useState, useMemo } from "react";
 import { getRecentTickets } from "../services/dashboardService";
 
 import { subscribeToServices } from "../../tickets/services/servicesService";
-import type { Service } from "../../../shared/types";
+import type { Service, Ticket } from "../../../shared/types";
 
-let cache: any = null;
-let lastFetch = 0;
-const CACHE_TIME = 1000 * 60 * 5; // 5 minutos
+// let cache: any = null;
+// let lastFetch = 0;
+// const CACHE_TIME = 1000 * 60 * 5; // 5 minutos
 
 type FilterType = "today" | "week" | "month" | "lastSevenDays";
 
 export function useDashboard() {
-    const [data, setData] = useState<any[]>([]);
+    const [data, setData] = useState<Ticket[]>([]);
     const [filter, setFilter] = useState<FilterType>("today");
     const [loading, setLoading] = useState(true);
 
@@ -25,25 +25,23 @@ export function useDashboard() {
     );
 
     useEffect(() => {
-
-        if (cache && Date.now() - lastFetch < CACHE_TIME) {
-            setData(cache);
-            setLoading(false);
-            return;
-        }
+        let mounted = true;
 
         const load = async () => {
-            const res = await getRecentTickets();
-            cache = res;
-            lastFetch = Date.now();
-            setData(res);
-            setLoading(false)
+            setLoading(true);
+            try {
+                const res = await getRecentTickets();
+                if (mounted) setData(res);
+            } finally {
+                if (mounted) setLoading(false);
+            }
         };
 
         load();
 
         const unsubServices = subscribeToServices(setServices);
         return () => {
+            mounted = false;
             unsubServices();
         };
 
@@ -97,12 +95,14 @@ export function useDashboard() {
             count: Number(count) || 0,
             average: Number(average) || 0
         };
-    }, [filteredData, servicesMap]);
+    }, [filteredData]);
 
     const incomeChart = useMemo(() => {
         const map: Record<string, number> = {};
 
         filteredData.forEach(t => {
+            if (!t.finished_at) return;
+
             const date = t.finished_at.toDate();
             let key = "";
 
@@ -114,6 +114,13 @@ export function useDashboard() {
                 key = date.toLocaleDateString("es-CO", {
                     day: "2-digit",
                     month: "2-digit"
+                });
+            }
+
+            if (filter === "lastSevenDays") {
+                key = date.toLocaleDateString("es-CO", {
+                    day: "2-digit",
+                    month: "2-digit",
                 });
             }
 

@@ -1,4 +1,5 @@
 import { memo } from "react";
+import type { AppUser } from "../../auth/context/AuthContext";
 
 type Props = {
     id: string;
@@ -7,7 +8,7 @@ type Props = {
     onFinish: (id: string) => void;
     onNoShow: (id: string) => void;
     loading: boolean;
-    user: any;
+    user: AppUser | null;
 };
 function CurrentTicket({
     id,

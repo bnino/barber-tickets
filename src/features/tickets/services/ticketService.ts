@@ -54,15 +54,15 @@ export const startService = async (ticketId: string) => {
 
     const snap = await getDocs(q);
 
-    // Finalizar el actual si existe
-    snap.forEach(async (docSnap) => {
-        await updateDoc(doc(db, "tickets", docSnap.id), {
-            status: "done",
-            time_end: serverTimestamp(),
-        });
-    });
+    await Promise.all(
+        snap.docs.map((docSnap) =>
+            updateDoc(doc(db, "tickets", docSnap.id), {
+                status: "done",
+                time_end: serverTimestamp(),
+            })
+        )
+    );
 
-    // Marcar el nuevo como atendiendo
     await updateDoc(doc(db, "tickets", ticketId), {
         status: "in_progress",
         time_start: serverTimestamp(),
@@ -70,7 +70,7 @@ export const startService = async (ticketId: string) => {
 };
 
 export const finishService = async (
-    ticketId: string, 
+    ticketId: string,
     data: {
         price: number,
         payment_method: "cash" | "nequi";

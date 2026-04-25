@@ -1,8 +1,9 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import type { ReactNode } from "react";
 
 type Props = {
-  children: any;
+  children: ReactNode;
 };
 
 export default function PublicRoute({ children }: Props) {

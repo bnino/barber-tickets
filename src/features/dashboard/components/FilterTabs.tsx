@@ -1,10 +1,12 @@
+type FilterType = "today" | "week" | "lastSevenDays" | "month";
+
 type Props = {
-    filter: string;
-    setFilter: (f: any) => void;
+    filter: FilterType;
+    setFilter: (f: FilterType) => void;
 };
 
 export default function FilterTabs({ filter, setFilter }: Props) {
-    const tabs = [
+    const tabs: { label: string; value: FilterType }[] = [
         { label: "Hoy", value: "today" },
         { label: "Esta Semana", value: "week" },
         { label: "Ult. 7 Dias", value: "lastSevenDays" },

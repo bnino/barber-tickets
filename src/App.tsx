@@ -1,5 +1,7 @@
 import './App.css'
-import { Routes, Route, useLocation } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
+
+import { useDeviceDetect } from "./shared/hooks/useDeviceDetect";
 
 import Home from './pages/Home';
 import Dashboard from "./pages/Dashboard";
@@ -10,27 +12,21 @@ import Register from './pages/Register';
 
 import { useAnnouncements } from "./features/announcements/hooks/useAnnouncements";
 import AnnouncementModal from "./shared/components/AnnouncementModal";
-
 import ProtectedRoute from "./features/auth/components/ProtectedRoute";
 import PublicRoute from "./features/auth/components/PublicRoute";
-
 import Navbar from "./shared/components/Navbar";
+import Footer from "./shared/components/Footer";
 
 function App() {
 
   const announcements = useAnnouncements();
-
-  const location = useLocation();
-
-  const isTV =
-    location.pathname === "/tv" ||
-    new URLSearchParams(location.search).has("tv");
+  const { isTV } = useDeviceDetect();
 
   if (isTV) return <PublicQueue />;
 
   return (
-    <>
-      {!isTV && <Navbar />}
+    <div className="min-h-screen flex flex-col">
+      <Navbar />
 
       {announcements.map(a => (
         <AnnouncementModal key={a.id} announcement={a} />
@@ -62,23 +58,9 @@ function App() {
             </ProtectedRoute>
           } />
       </Routes>
-      <p className="text-sm text-gray-500 mt-6 text-end mb-4 mr-4">
-        Desarrollado por <a href="https://github.com/bnino" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
-          Brayan Niño
-        </a>
-      </p>
-    </>
+      <Footer />
+    </div>
   )
 }
-
-/* function RedirectByQuery() {
-  const params = new URLSearchParams(window.location.search);
-
-  if (params.has("tv")) {
-    return <Navigate to="/tv" replace />;
-  }
-
-  return <Navigate to="/" replace />;
-} */
 
 export default App

@@ -49,51 +49,60 @@ export default function PaymentsMethodChart({ data }: Props) {
                     description="Los pagos aparecerán cuando finalices servicios"
                 />
             ) : (
-                <div className="h-64" >
-                    <ResponsiveContainer>
-                        <PieChart>
-                            <Pie
-                                data={chartData}
-                                dataKey="value"
-                                nameKey="name"
-                                innerRadius={60}
-                                outerRadius={100}
-                            >
-                                {chartData.map((_, index) => (
-                                    <Cell
-                                        key={index}
-                                        fill={getColorByIndex(index)}
-                                    />
-                                ))}
-                            </Pie>
+                <ResponsiveContainer width="100%" height={256}>
+                    <PieChart>
+                        <Pie
+                            data={chartData}
+                            dataKey="value"
+                            nameKey="name"
+                            innerRadius={60}
+                            outerRadius={100}
+                        >
+                            {chartData.map((_, index) => (
+                                <Cell
+                                    key={index}
+                                    fill={getColorByIndex(index)}
+                                />
+                            ))}
+                        </Pie>
 
-                            <Tooltip
+                        <Tooltip
 
-                                contentStyle={{
-                                    backgroundColor: "#ffffff",
-                                    padding: 12,
-                                    borderRadius: 5,
-                                    boxShadow: "0 10px 15px rgba(0, 0, 0, 0.08)",
-                                    fontSize: "0.875rem",
-                                    fontWeight: "500",
-                                    border: "1px solid #000"
-                                }}
-                                itemStyle={{
-                                    color: "#000",
-                                }}
-                                formatter={(value, name, props: any) => {
-                                    const amount = typeof value === "number" ? value : 0;
-                                    return [
-                                        `${formatCOP(amount)} (${props.payload.count} pagos)`,
-                                        name
-                                    ];
-                                }}
-                            />
-                            <Legend />
-                        </PieChart>
-                    </ResponsiveContainer>
-                </div>
+                            contentStyle={{
+                                backgroundColor: "#ffffff",
+                                padding: 12,
+                                borderRadius: 5,
+                                boxShadow: "0 10px 15px rgba(0, 0, 0, 0.08)",
+                                fontSize: "0.875rem",
+                                fontWeight: "500",
+                                border: "1px solid #000"
+                            }}
+                            itemStyle={{
+                                color: "#000",
+                            }}
+                            formatter={(value, name, props: any) => {
+                                const amount = typeof value === "number" ? value : 0;
+                                return [
+                                    `${formatCOP(amount)} (${props.payload.count} pagos)`,
+                                    name
+                                ];
+                            }}
+                        />
+                        <Legend />
+                    </PieChart>
+                </ResponsiveContainer>
             )}
+            <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                {chartData.map((item, index) => (
+                    <div key={item.name} className="flex items-center gap-1">
+                        <span
+                            className="w-3 h-3 rounded-full"
+                            style={{ backgroundColor: getColorByIndex(index) }}
+                        />
+                        {item.name}
+                    </div>
+                ))}
+            </div>
         </div>
     );
 }
