@@ -7,7 +7,6 @@ import type { AppUser } from "../../auth/context/AuthContext";
 
 type Props = {
     tickets: Ticket[];
-    servicesMap: Record<string, { name: string; price: number }>;
     onStart: (id: string) => void;
     hasActiveService: boolean;
     loadingId: string | null;
@@ -81,10 +80,10 @@ function TicketTable({
                                                         ${loadingId === t.id
                                                     ? "bg-gray-400 cursor-wait"
                                                     : t.status === TICKET_STATUS.IN_PROGRESS
-                                                        ? "bg-green-600 cursor-default"
+                                                        ? "bg-emerald-600 text-white cursor-default"
                                                         : hasActiveService
                                                             ? "bg-gray-300 cursor-not-allowed"
-                                                            : "bg-blue-600 hover:bg-blue-700 active:scale-95"
+                                                            : "bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white"
                                                 }
                                                 `}
                                         >

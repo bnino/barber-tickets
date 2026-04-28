@@ -4,10 +4,6 @@ import { getRecentTickets } from "../services/dashboardService";
 import { subscribeToServices } from "../../tickets/services/servicesService";
 import type { Service, Ticket } from "../../../shared/types";
 
-// let cache: any = null;
-// let lastFetch = 0;
-// const CACHE_TIME = 1000 * 60 * 5; // 5 minutos
-
 type FilterType = "today" | "week" | "month" | "lastSevenDays";
 
 export function useDashboard() {
@@ -98,7 +94,7 @@ export function useDashboard() {
     }, [filteredData]);
 
     const incomeChart = useMemo(() => {
-        const map: Record<string, number> = {};
+        const map: Record<string, { value: number; timestamp: number }> = {};
 
         filteredData.forEach(t => {
             if (!t.finished_at) return;
@@ -106,31 +102,25 @@ export function useDashboard() {
             const date = t.finished_at.toDate();
             let key = "";
 
-            if (filter === "today") {
-                key = `${date.getHours()}:00`;
-            }
+            if (filter === "today") key = `${date.getHours()}:00`;
 
-            if (filter === "week" || filter === "month") {
+            if (filter === "week" || filter === "month" || filter === "lastSevenDays") {
                 key = date.toLocaleDateString("es-CO", {
                     day: "2-digit",
                     month: "2-digit"
                 });
             }
 
-            if (filter === "lastSevenDays") {
-                key = date.toLocaleDateString("es-CO", {
-                    day: "2-digit",
-                    month: "2-digit",
-                });
+            if (!map[key]) {
+                map[key] = { value: 0, timestamp: date.getTime() };
             }
 
-            map[key] = (map[key] || 0) + (t.price || 0);
+            map[key].value += t.price || 0;;
         });
 
-        return Object.entries(map).map(([label, value]) => ({
-            label,
-            value
-        }));
+        return Object.entries(map)
+        .sort((a, b) => a[1].timestamp - b[1].timestamp)
+        .map(([label, { value }]) => ({ label, value }));
     }, [filteredData, filter]);
 
     const servicesChart = useMemo(() => {

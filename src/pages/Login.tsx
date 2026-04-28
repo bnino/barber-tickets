@@ -23,7 +23,7 @@ export default function Login() {
             setLoading(true);
             await loginWithEmail(email, password);
             navigate("/");
-        } catch (err: any) {
+        } catch {
             setError("Correo o contraseña incorrectos");
         } finally {
             setLoading(false);
@@ -35,7 +35,7 @@ export default function Login() {
             setLoading(true);
             await loginWithGoogle();
             navigate("/");
-        } catch (err) {
+        } catch {
             setError("Error al iniciar con Google");
         } finally {
             setLoading(false);
@@ -43,7 +43,7 @@ export default function Login() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
             <div className="bg-white p-6 rounded-2xl shadow-lg w-full max-w-sm">
 
                 {/* Header */}
@@ -84,7 +84,7 @@ export default function Login() {
                 <button
                     onClick={handleEmailLogin}
                     disabled={loading}
-                    className="w-full bg-black text-white py-2 rounded-lg font-semibold transition hover:bg-gray-800 disabled:opacity-50"
+                    className="w-full bg-indigo-600 text-white py-2 rounded-lg font-semibold transition hover:bg-indigo-700 disabled:opacity-50"
                 >
                     {loading ? "Ingresando..." : "Ingresar"}
                 </button>

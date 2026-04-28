@@ -7,10 +7,13 @@ import { auth } from "../services/firebaseService";
 
 import { useSettings } from "../../features/settings/hooks/useSettings";
 
+import { useOnlineStatus } from "../hooks/useOnlineStatus";
+
 export default function Navbar() {
 
     const location = useLocation();
     const { user } = useAuth();
+    const { isOnline } = useOnlineStatus();
     const { companyName } = useSettings();
     const [open, setOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
@@ -41,7 +44,7 @@ export default function Navbar() {
     };
 
     return (
-        <nav className="bg-white shadow px-6 py-3 flex justify-between items-center">
+        <nav className="bg-white shadow px-6 py-3 flex justify-between items-center relative">
 
             {/* Left */}
             <div className="flex items-center gap-6">
@@ -57,7 +60,7 @@ export default function Navbar() {
                 {!user ? (
                     <Link
                         to="/login"
-                        className="text-sm font-semibold bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 "
+                        className="text-sm font-semibold bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition"
                     >
                         Iniciar sesión
                     </Link>
@@ -73,7 +76,7 @@ export default function Navbar() {
                                     alt="avatar"
                                     referrerPolicy="no-referrer"
                                     className="w-full h-full object-cover rounded-full"
-                                    onError={(e) => {              
+                                    onError={(e) => {
                                         e.currentTarget.style.display = "none";
                                     }}
                                 />
@@ -133,6 +136,12 @@ export default function Navbar() {
                     </>
                 )}
             </div>
+            {!isOnline && (
+                <div className="absolute top-full left-0 w-full bg-amber-50 border-b border-amber-200 px-6 py-1.5 flex items-center gap-2 text-xs font-medium text-amber-700 z-40">
+                    <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
+                    Sin conexión — los cambios se guardarán cuando vuelva el internet
+                </div>
+            )}
         </nav>
     );
 }

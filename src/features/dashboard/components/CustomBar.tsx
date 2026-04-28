@@ -1,10 +1,18 @@
 import { Rectangle } from "recharts";
 import { getColorByIndex } from "../../../shared/utils/chartColors";
 
-export default function CustomBar(props: any) {
-    const { x, y, width, height, index } = props;
+type CustomBarProps = {
+    x?: number;
+    y?: number;
+    width?: number;
+    height?: number;
+    index?: number;
+};
 
-    if (width <= 0 || height <= 0) return null;
+export default function CustomBar(props: CustomBarProps) {
+    const { x, y, width, height, index = 0 } = props;
+
+    if (width === undefined || height === undefined || width <= 0 || height <= 0) return null;
 
     return (
         <Rectangle

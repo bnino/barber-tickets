@@ -1,26 +1,26 @@
 import { useEffect, useState } from "react";
+import type { Service } from "../../../shared/types";
+
 import {
     collection,
     onSnapshot,
     addDoc,
     updateDoc,
     deleteDoc,
-    doc
+    doc,
+    query,
+    orderBy
 } from "firebase/firestore";
 import { db } from "../../../shared/services/firebaseService";
 
-type Service = {
-    id: string;
-    name: string;
-    price: number;
-};
 
 export function useServices() {
     const [services, setServices] = useState<Service[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const unsub = onSnapshot(collection(db, "services"), (snapshot) => {
+        const q = query(collection(db, "services"), orderBy("name", "asc"));
+        const unsub = onSnapshot(q, (snapshot) => {
             const data = snapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data()
@@ -39,7 +39,8 @@ export function useServices() {
         }
         await addDoc(collection(db, "services"), {
             name: data.name,
-            price: data.price
+            price: data.price,
+            is_active: true
         });
     };
 

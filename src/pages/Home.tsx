@@ -6,7 +6,7 @@ import ReserveForm from "../features/tickets/components/ReserveForm";
 import FinishModal from "../features/tickets/components/FinishModal";
 
 import { useTickets } from "../features/tickets/hooks/useTickets";
-import { useAlert } from "../features/tickets/hooks/useAlert";
+import { useAlert } from "../shared/hooks/useAlert";
 
 import { useSettings } from "../features/settings/hooks/useSettings";
 
@@ -31,7 +31,6 @@ export default function Home() {
         services,
         current,
         hasActiveService,
-        servicesMap,
         loadingId,
         handleReserve,
         startServiceHandler,
@@ -42,7 +41,7 @@ export default function Home() {
     const { user } = useAuth();
 
     return (
-        <div className="min-h-screen bg-gray-100 px-4 py-6">
+        <div className="min-h-screen bg-gray-50 px-4 py-6">
             <div className="mx-auto w-full max-w-4xl rounded-2xl bg-white p-6 shadow-lg">
                 {current && (
                     <CurrentTicket
@@ -64,7 +63,7 @@ export default function Home() {
 
                         onNoShow={async (id) => {
                             const confirm = await alert.confirm(
-                                "Se marcará como cancelado y se llamará el siguiente turno"
+                                "Se marcará como cancelado y el cliente perderá su turno. ¿Deseas continuar?"
                             );
 
                             if (!confirm.isConfirmed) return;
@@ -91,7 +90,6 @@ export default function Home() {
                         (
                             <TicketTable
                                 tickets={tickets}
-                                servicesMap={servicesMap}
                                 user={user}
                                 onStart={async (id) => {
                                     const res = await startServiceHandler(id);
@@ -108,9 +106,9 @@ export default function Home() {
                     }
 
                 </div>
-                <div className="mt-7.5 p-5 rounded-xl bg-gray-100 shadow-lg text-center">
+                <div className="mt-7.5 p-5 rounded-xl bg-gray-50 border border-gray-200 text-center">
 
-                    <button disabled={!isOpen} className="px-6 py-3.5 text-base font-semibold rounded-lg border-none cursor-pointer bg-gray-900 text-white transition-transform duration-150 ease-in-out hover:bg-black hover:scale-105" onClick={() => setShowForm(prev => !prev)}>
+                    <button disabled={!isOpen} className="px-6 py-3.5 text-base font-semibold rounded-lg border-none cursor-pointer bg-indigo-600 text-white transition-transform duration-150 ease-in-out hover:bg-indigo-700 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed" onClick={() => setShowForm(prev => !prev)}>
                         {isOpen ? "Reservar turno" : "Negocio cerrado"}
                     </button>
 

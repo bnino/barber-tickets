@@ -1,6 +1,7 @@
 
 import { memo } from "react";
 import type { Service } from "../../../shared/types";
+import { formatCOP } from "../../../shared/utils/currency";
 
 type Props = {
     clientName: string;
@@ -38,12 +39,12 @@ function ReserveForm({
                 <option value="">Selecciona un servicio</option>
                 {services.map((s) => (
                     <option key={s.id} value={s.id}>
-                        {s.name} - ${s.price}
+                        {s.name} - $ {formatCOP(s.price)}
                     </option>
                 ))}
             </select>
 
-            <button className="mt-2.5 p-3 text-base font-bold bg-blue-500 text-white border-none rounded-md cursor-pointer transition-colors duration-150 ease-in-out hover:bg-blue-700" type="submit">
+            <button className="mt-2.5 p-3 text-base font-semibold bg-indigo-600 text-white border-none rounded-lg cursor-pointer transition-colors duration-150 ease-in-out hover:bg-indigo-700" type="submit">
                 Confirmar turno
             </button>
         </form>

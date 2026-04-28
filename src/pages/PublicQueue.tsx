@@ -35,7 +35,7 @@ export default function PublicQueue() {
             <div className="text-center mb-10">
                 <p className="text-2xl opacity-70">Atendiendo</p>
 
-                <h2 className="text-6xl font-bold mt-2">
+                <h2 className="text-6xl font-bold mt-2 text-indigo-300">
                     {current?.clientNameFormatted || "---"}
                 </h2>
 

@@ -2,7 +2,7 @@ import { useState } from "react";
 
 import { useSettingsForm } from "../features/settings/hooks/useSettingsForm";
 
-import { useAlert } from "../features/tickets/hooks/useAlert";
+import { useAlert } from "../shared/hooks/useAlert";
 
 import UsersTable from "../features/users/components/UsersTable";
 
@@ -36,7 +36,7 @@ export default function Admin() {
     } = useSettingsForm();
 
     return (
-        <div className="min-h-screen bg-gray-100 p-6">
+        <div className="min-h-screen bg-gray-50 p-6">
             <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-xl p-8 space-y-6">
 
                 <h1 className="text-xl font-bold mb-6">
@@ -48,7 +48,7 @@ export default function Admin() {
 
                         setShowAnnouncementModal(true);
                     }}
-                    className="px-4 py-2 rounded-lg bg-blue-900 text-white font-semibold transition hover:bg-blue-600 cursor-pointer"
+                    className="px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold transition hover:bg-indigo-700 cursor-pointer"
                 >
                     Crear anuncio
                 </button>
@@ -66,7 +66,7 @@ export default function Admin() {
                     <span className="text-sm font-semibold">Estado del negocio</span>
                     <button
                         onClick={() => setIsOpen(!isOpen)}
-                        className={`px-4 py-2 rounded-lg text-white font-semibold transition ${isOpen ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"
+                        className={`px-4 py-2 rounded-lg text-white font-semibold transition ${isOpen ? "bg-emerald-600 hover:bg-emerald-700" : "bg-red-600 hover:bg-red-700"
                             }`}
                     >
                         {isOpen ? "Abierto" : "Cerrado"}

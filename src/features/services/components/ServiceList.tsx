@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useServices } from "../hooks/useServices";
 import ServiceModal from "./ServiceModal";
-import { useAlert } from "../../tickets/hooks/useAlert";
+import { useAlert } from "../../../shared/hooks/useAlert";
 import { formatCOP } from "../../../shared/utils/currency";
 
 import type { Service } from "../../../shared/types";
@@ -16,7 +16,7 @@ export default function ServiceList() {
     return (
         <div>
             <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold">Servicios</h2>
+                <h2 className="text-xl font-bold">📋 Servicios</h2>
 
                 <button
                     onClick={() => {
@@ -43,22 +43,20 @@ export default function ServiceList() {
                         <div className="flex gap-2">
                             <button
                                 onClick={() => {
+                                    if (!s.id) return;
                                     setEditingService(s);
                                     setShowModal(true);
                                 }}
-                                className="cursor-pointer text-blue-600 text-sm"
+                                className="cursor-pointer text-indigo-600 hover:text-indigo-800 text-sm transition"
                             >
                                 Editar
                             </button>
 
                             <button
                                 onClick={async () => {
-                                    const confirm = await alert.confirm(
-                                        "¿Eliminar este servicio?"
-                                    );
-
+                                    if (!s.id) return;
+                                    const confirm = await alert.confirm("¿Eliminar este servicio?");
                                     if (!confirm.isConfirmed) return;
-
                                     await deleteService(s.id);
                                     alert.success("Servicio eliminado");
                                 }}

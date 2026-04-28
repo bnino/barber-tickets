@@ -3,7 +3,7 @@ import { db } from "../../../shared/services/firebaseService";
 import {
   collection,
   addDoc,
-  serverTimestamp,
+
   query,
   where,
   onSnapshot,
@@ -11,11 +11,11 @@ import {
 } from "firebase/firestore";
 import type { Announcement } from "../../../shared/types";
 
-export async function createAnnouncement(data: Announcement) {
+export async function createAnnouncement(data: Pick<Announcement, "message" | "type" | "startDate" | "endDate">) {
   return await addDoc(collection(db, "announcements"), {
     ...data,
     active: true,
-    created_at: serverTimestamp()
+    created_at: Timestamp.now(),
   });
 }
 
@@ -39,11 +39,11 @@ export function subscribeToActiveAnnouncements(callback: (data: Announcement[]) 
 
         const start = a.startDate instanceof Timestamp
           ? a.startDate.toDate()
-          : new Date(a.startDate);
+          : new Date(a.startDate as unknown as string);
 
         const end = a.endDate instanceof Timestamp
           ? a.endDate.toDate()
-          : new Date(a.endDate);
+          : new Date(a.endDate as unknown as string);
         return now >= start && now <= end;
       });
 
