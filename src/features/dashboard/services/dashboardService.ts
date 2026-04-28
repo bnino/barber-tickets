@@ -4,7 +4,8 @@ import {
     query,
     where,
     getDocs,
-    Timestamp
+    Timestamp,
+    orderBy
 } from "firebase/firestore";
 import type { Ticket } from "../../../shared/types";
 
@@ -14,8 +15,9 @@ export async function getRecentTickets(): Promise<Ticket[]> {
 
     const q = query(
         collection(db, "tickets"),
-        //where("status", "==", "done"),
-        where("finished_at", ">=", Timestamp.fromDate(start))
+        where("status", "==", "done"),
+        where("finished_at", ">=", Timestamp.fromDate(start)),
+        orderBy("finished_at", "desc")
     );
 
     const snap = await getDocs(q);

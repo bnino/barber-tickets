@@ -1,9 +1,5 @@
 import type { Timestamp } from "firebase/firestore";
 
-/* ========================
-   TICKETS
-======================== */
-
 export type TicketStatus =
     | "waiting"
     | "in_progress"
@@ -19,14 +15,12 @@ export type Ticket = {
   status: TicketStatus;
   price?: number; 
   payment_method?: "cash" | "nequi";
-  createdAt: Timestamp;
+  date?: Timestamp;
+  createdAt?: Timestamp;
   started_at?: Timestamp;
   finished_at?: Timestamp;
 };
 
-/* ========================
-   SERVICES
-======================== */
 export type Service = {
   id?: string;
   name: string;
@@ -34,9 +28,6 @@ export type Service = {
   createdAt?: Timestamp;
 };
 
-/* ========================
-   USERS
-======================== */
 export type UserDB = {
   id: string;
   name: string;
@@ -45,18 +36,12 @@ export type UserDB = {
   createdAt?: Timestamp;
 };
 
-/* ========================
-   SETTINGS
-======================== */
 export type Settings = {
   company_name: string;
   is_open: boolean;
   working_days: string[];
 };
 
-/* ========================
-   ANNOUNCEMENTS
-======================== */
 export type Announcement = {
   id?: string;
   message: string;

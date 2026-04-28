@@ -15,8 +15,7 @@ export default function Register() {
     const cleanEmail = sanitizeEmail(email);
 
     const navigate = useNavigate();
-
-    const handleRegister = async (e: any) => {
+    const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
 
         if (!cleanName || !cleanEmail || !password) {
@@ -42,7 +41,7 @@ export default function Register() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
             <div className="bg-white p-6 rounded-2xl shadow-lg w-full max-w-sm">
 
                 <h1 className="text-2xl font-bold mb-1 text-center">
@@ -83,7 +82,7 @@ export default function Register() {
 
                     <button
                         disabled={loading}
-                        className="bg-black text-white p-2 rounded-lg mt-2 hover:bg-gray-900 transition disabled:opacity-50"
+                        className="bg-indigo-600 text-white p-2 rounded-lg mt-2 hover:bg-indigo-700 transition disabled:opacity-50 cursor-pointer"
                     >
                         {loading ? "Creando..." : "Registrarse"}
                     </button>

@@ -22,7 +22,7 @@ export default function FilterTabs({ filter, setFilter }: Props) {
                     className={`
                         px-4 py-2 cursor-pointer rounded-lg text-sm font-semibold transition
                         ${filter === tab.value
-                            ? "bg-gray-900 text-white shadow"
+                            ? "bg-indigo-600 text-white shadow"
                             : "text-gray-600 hover:bg-gray-100"}
                     `}
                 >

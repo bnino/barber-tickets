@@ -31,7 +31,7 @@ function FinishModal({
                     Finalizar servicio
                 </h2>
 
-                <p className="text-sm font-semibold mb-2">Cancela</p>
+                <p className="text-sm font-semibold mb-2">Valor pagado:</p>
 
                 <div className="flex items-center border rounded mb-3 px-2">
                     <span className="text-gray-500 font-semibold">$</span>
@@ -78,14 +78,14 @@ function FinishModal({
                 <div className="flex justify-end gap-2">
                     <button
                         onClick={onClose}
-                        className="px-3 py-2 bg-gray-300 rounded"
+                        className="px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg font-semibold hover:bg-gray-200 transition"
                     >
                         Cancelar
                     </button>
 
                     <button
                         onClick={onConfirm}
-                        className="px-3 py-2 bg-green-600 text-white rounded"
+                        className="px-3 py-2 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition"
                     >
                         Confirmar
                     </button>

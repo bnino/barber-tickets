@@ -1,11 +1,11 @@
 const COLORS = [
-  "#6366F1", // Indigo suave
-  "#10B981", // Verde pastel
-  "#F59E0B", // Amarillo cálido suave
-  "#EF4444", // Rojo moderado
-  "#06B6D4", // Cyan suave
-  "#8B5CF6", // Violeta tenue
-  "#94A3B8", // Gris elegante
+  "#4f46e5", // indigo-600 — principal
+  "#10b981", // emerald-500 — éxito
+  "#f59e0b", // amber-400 — advertencia
+  "#ef4444", // red-500 — peligro
+  "#06b6d4", // cyan-500
+  "#8b5cf6", // violet-500
+  "#94a3b8", // slate-400
 ];
 
 export function getColorByIndex(index: number) {

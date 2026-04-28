@@ -1,5 +1,5 @@
 import { memo, useEffect, useState } from "react";
-import { useAlert } from "../../tickets/hooks/useAlert";
+import { useAlert } from "../../../shared/hooks/useAlert";
 
 type Props = {
     isOpen: boolean;
@@ -29,7 +29,7 @@ function ServiceModal({
             setName("");
             setPrice("");
         }
-    }, [initialData]);
+    }, [initialData, isOpen]);
 
     if (!isOpen) return null;
 
@@ -59,7 +59,7 @@ function ServiceModal({
                 <div className="flex justify-end gap-2">
                     <button
                         onClick={onClose}
-                        className="px-3 py-2 bg-gray-300 rounded"
+                        className="px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg font-semibold hover:bg-gray-200 transition"
                     >
                         Cancelar
                     </button>
@@ -98,7 +98,7 @@ function ServiceModal({
 
                             onClose();
                         }}
-                        className="px-3 py-2 bg-black text-white rounded"
+                        className="px-3 py-2 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition"
                     >
                         Guardar
                     </button>

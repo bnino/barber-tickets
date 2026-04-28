@@ -1,7 +1,5 @@
 import { db } from "../../../shared/services/firebaseService";
-
 import type { Ticket } from "../../../shared/types";
-
 import {
     collection,
     onSnapshot,
@@ -12,7 +10,7 @@ import {
     updateDoc,
     doc,
     getDocs,
-    serverTimestamp,
+    Timestamp,
     limit,
 } from "firebase/firestore";
 
@@ -42,7 +40,7 @@ export const addTicket = async (clientName: string, serviceId: string) => {
         barber_uid: null,
         service_id: serviceId,
         status: "waiting",
-        date: serverTimestamp(),
+        date: Timestamp.now(), 
     });
 };
 
@@ -58,21 +56,21 @@ export const startService = async (ticketId: string) => {
         snap.docs.map((docSnap) =>
             updateDoc(doc(db, "tickets", docSnap.id), {
                 status: "done",
-                time_end: serverTimestamp(),
+                time_end: Timestamp.now(), 
             })
         )
     );
 
     await updateDoc(doc(db, "tickets", ticketId), {
         status: "in_progress",
-        time_start: serverTimestamp(),
+        time_start: Timestamp.now(), 
     });
 };
 
 export const finishService = async (
     ticketId: string,
     data: {
-        price: number,
+        price: number;
         payment_method: "cash" | "nequi";
     }
 ) => {
@@ -80,10 +78,9 @@ export const finishService = async (
         status: "done",
         price: data.price,
         payment_method: data.payment_method,
-        finished_at: serverTimestamp(),
+        finished_at: Timestamp.now(), 
     });
 
-    await startNextWaiting();
 };
 
 export const startNextWaiting = async () => {
@@ -100,7 +97,7 @@ export const startNextWaiting = async () => {
         const next = snap.docs[0];
         await updateDoc(doc(db, "tickets", next.id), {
             status: "in_progress",
-            time_start: serverTimestamp(),
+            time_start: Timestamp.now(), 
         });
     }
 };
@@ -108,8 +105,7 @@ export const startNextWaiting = async () => {
 export const markNoShow = async (ticketId: string) => {
     await updateDoc(doc(db, "tickets", ticketId), {
         status: "no_show",
-        time_end: serverTimestamp(),
+        time_end: Timestamp.now(), 
     });
 
-    await startNextWaiting();
 };

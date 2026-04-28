@@ -31,7 +31,7 @@ export default function IncomeChart({ data }: Props) {
                         <XAxis dataKey="label" />
                         <YAxis />
                         <Tooltip content={<ChartTooltip />} />
-                        <Line type="monotone" dataKey="value" strokeWidth={3} />
+                        <Line type="monotone" dataKey="value" strokeWidth={3} stroke="#4f46e5" />
                     </LineChart>
                 </ResponsiveContainer>
             )}

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createAnnouncement } from "../services/announcementService";
 import { Timestamp } from "firebase/firestore";
+import { useAlert } from "../../../shared/hooks/useAlert";
 
 type Props = {
   onClose: () => void;
@@ -8,6 +9,7 @@ type Props = {
 
 export default function CreateAnnouncementModal({ onClose }: Props) {
   const modalRef = useRef<HTMLDivElement>(null);
+  const alert = useAlert();
 
   const [message, setMessage] = useState("");
   const [startDate, setStartDate] = useState("");
@@ -23,7 +25,7 @@ export default function CreateAnnouncementModal({ onClose }: Props) {
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  }, [onClose]);
 
   const applyPreset = (type: "7d" | "1m" | "2m") => {
     const now = new Date();
@@ -40,35 +42,40 @@ export default function CreateAnnouncementModal({ onClose }: Props) {
 
   const handleSave = async () => {
     if (!message || !startDate || !endDate) {
-      alert("Completa todos los campos");
+      alert.warning("Completa todos los campos");
       return;
     }
 
     if (new Date(endDate) < new Date(startDate)) {
-      alert("La fecha final no puede ser menor a la inicial");
+      alert.warning("La fecha final no puede ser menor a la inicial");
       return;
     }
 
+    const [sy, sm, sd] = startDate.split("-").map(Number);
+    const [ey, em, ed] = endDate.split("-").map(Number);
+
+    const start = new Date(sy, sm - 1, sd, 0, 0, 0);       
+    const end   = new Date(ey, em - 1, ed, 23, 59, 59);
+
     await createAnnouncement({
       message,
-      startDate: Timestamp.fromDate(new Date(startDate)),
-      endDate: Timestamp.fromDate(new Date(endDate)),
+      startDate: Timestamp.fromDate(new Date(start)),
+      endDate: Timestamp.fromDate(new Date(end)),
       type: "info"
     });
 
+    alert.success("Anuncio creado exitosamente");
     onClose();
   };
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
 
-      {/* MODAL */}
       <div
         ref={modalRef}
         className="bg-white w-full max-w-md rounded-2xl shadow-xl p-6 relative animate-[fadeIn_.2s_ease]"
       >
 
-        {/* ❌ botón cerrar */}
         <button
           onClick={onClose}
           className="absolute top-3 right-3 text-gray-400 hover:text-black text-lg"
@@ -80,7 +87,6 @@ export default function CreateAnnouncementModal({ onClose }: Props) {
           📢 Crear anuncio
         </h2>
 
-        {/* MENSAJE */}
         <textarea
           placeholder="Ej: Hemos actualizado nuestros precios..."
           value={message}
@@ -88,9 +94,8 @@ export default function CreateAnnouncementModal({ onClose }: Props) {
           className="w-full border p-2 rounded-lg mb-4 focus:ring-2 focus:ring-black outline-none"
         />
 
-        {/* PRESETS */}
-        <p className="text-sm font-semibold mb-2">Duración rápida</p>
-        <div className="flex gap-2 mb-4">
+        <p className="text-sm font-semibold mb-2">Duración</p>
+        <div className="flex gap-2 mb-8">
           {[
             { label: "7 días", value: "7d" },
             { label: "1 mes", value: "1m" },
@@ -98,11 +103,11 @@ export default function CreateAnnouncementModal({ onClose }: Props) {
           ].map(p => (
             <button
               key={p.value}
-              onClick={() => applyPreset(p.value as any)}
-              className={`px-3 py-1.5 rounded-lg text-sm border transition
+              onClick={() => applyPreset(p.value as "7d" | "1m" | "2m")}
+              className={`px-3 py-1.5 rounded-lg text-sm border transition cursor-pointer
                 ${selectedPreset === p.value
-                  ? "bg-black text-white"
-                  : "bg-white hover:bg-gray-100"
+                  ? "bg-indigo-600 text-white font-semibold"
+                  : "bg-white hover:bg-gray-200"
                 }`}
             >
               {p.label}
@@ -110,7 +115,7 @@ export default function CreateAnnouncementModal({ onClose }: Props) {
           ))}
         </div>
 
-        {/* DATEPICKERS */}
+        <p className="text-sm font-semibold mb-1">Duración Personalizada</p>
         <div className="grid grid-cols-2 gap-3 mb-4">
           <div>
             <label className="text-xs text-gray-500">Inicio</label>
@@ -139,7 +144,6 @@ export default function CreateAnnouncementModal({ onClose }: Props) {
           </div>
         </div>
 
-        {/* BOTONES */}
         <div className="flex justify-end gap-2">
           <button
             onClick={onClose}

@@ -1,46 +1,62 @@
-import { useEffect, useMemo, useState } from "react";
-
-import { capitalizeWords } from "../../../shared/utils/format";
-import type { ApiResponse } from "../../../shared/types/apiResponse";
-import { handleError } from "../../../shared/utils/errorHandler";
-import type { Service, Ticket } from "../../../shared/types";
-
-import { TICKET_STATUS } from "../constants/tickets";
-import { subscribeToServices } from "../services/servicesService";
-
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import {
     subscribeToTickets,
     addTicket,
     startService,
     finishService,
-    markNoShow
+    markNoShow,
+    startNextWaiting,
 } from "../services/ticketService";
+import { subscribeToServices } from "../services/servicesService";
+import type { Ticket, Service } from "../../../shared/types";
+import { capitalizeWords } from "../../../shared/utils/format";
+
+type ApiResponse = { ok: true } | { ok: false; message: string };
 
 export function useTickets() {
     const [tickets, setTickets] = useState<Ticket[]>([]);
     const [services, setServices] = useState<Service[]>([]);
+    const [loading, setLoading] = useState(true);
     const [loadingId, setLoadingId] = useState<string | null>(null);
 
-    const servicesMap = useMemo<Record<string, { name: string; price: number }>>(
-        () => Object.fromEntries(
-            services.map(s => [s.id, { name: s.name, price: s.price }])
-        ),
+    const shouldAutoStart = useRef(false);
+
+    const servicesMap = useMemo(
+        () => Object.fromEntries(services.map(s => [s.id, s])),
         [services]
     );
 
-    const enrichedTickets = useMemo(() => {
-        return tickets.map(t => ({
-            ...t,
-            clientNameFormatted: t.client_name
+    const enrichedTickets = useMemo(
+        () =>
+            tickets.map(t => ({
+                ...t,
+                clientNameFormatted: t.client_name
                 ? capitalizeWords(t.client_name)
                 : "Sin nombre",
-            serviceName: servicesMap[t.service_id]?.name ?? "—"
-        }));
-    }, [tickets, servicesMap]);
+                serviceName: servicesMap[t.service_id]?.name ?? "Servicio",
+            })),
+        [tickets, servicesMap]
+    );
 
-    // Subscripciones
     useEffect(() => {
-        const unsubTickets = subscribeToTickets(setTickets);
+
+        const unsubTickets = subscribeToTickets((data) => {
+            setTickets(data);
+            setLoading(false);
+
+            if (shouldAutoStart.current) {
+                const hasActive = data.some(t => t.status === "in_progress");
+                const nextWaiting = data.find(t => t.status === "waiting");
+
+                if (!hasActive && nextWaiting) {
+                    shouldAutoStart.current = false;
+                    startNextWaiting().catch(() => {});
+                } else {
+                    shouldAutoStart.current = false;
+                }
+            }
+        });
+
         const unsubServices = subscribeToServices(setServices);
 
         return () => {
@@ -49,73 +65,62 @@ export function useTickets() {
         };
     }, []);
 
-    // Derivados
-    const current = useMemo(
-        () => enrichedTickets.find(t => t.status === TICKET_STATUS.IN_PROGRESS),
-        [enrichedTickets]
-    );
-
-    const hasActiveService = Boolean(current);
-
-    // Acciones
-    const handleReserve = async (clientName: string, serviceId: string): Promise<ApiResponse> => {
+    const handleReserve = useCallback(async (
+        clientName: string,
+        serviceId: string
+    ): Promise<ApiResponse> => {
         if (!clientName || !serviceId) {
             return { ok: false, message: "Campos incompletos" };
         }
-
-        await addTicket(clientName, serviceId);
+        addTicket(clientName, serviceId).catch(() => {});
         return { ok: true };
-    };
+    }, []);
 
-    const startServiceHandler = async (ticketId: string): Promise<ApiResponse> => {
-        try {
-            setLoadingId(ticketId);
-            await startService(ticketId);
-            return { ok: true };
-        } catch (error) {
-            return handleError(error, "No se pudo iniciar el servicio");
-        } finally {
-            setLoadingId(null);
-        }
-    };
+    const startServiceHandler = useCallback(async (
+        ticketId: string
+    ): Promise<ApiResponse> => {
+        setLoadingId(ticketId);
+        startService(ticketId).catch(() => {});
+        setLoadingId(null);
+        return { ok: true };
+    }, []);
 
-    const handleFinish = async (
+    const handleFinish = useCallback(async (
         ticketId: string,
         data: { price: number; payment_method: "cash" | "nequi" }
     ): Promise<ApiResponse> => {
-        try {
-            setLoadingId(ticketId);
-            await finishService(ticketId, data);
-            return { ok: true };
-        } catch (error) {
-            return handleError(error, "No se pudo finalizar");
-        } finally {
-            setLoadingId(null);
-        }
-    };
+        setLoadingId(ticketId);
+        shouldAutoStart.current = true;
+        finishService(ticketId, data).catch(() => {});
+        setLoadingId(null);
+        return { ok: true };
+    }, []);
 
-    const handleNoShow = async (ticketId: string): Promise<ApiResponse> => {
-        try {
-            setLoadingId(ticketId);
-            await markNoShow(ticketId);
-            return { ok: true };
-        } catch (error) {
-            return handleError(error, "No se pudo cancelar el turno");
-        } finally {
-            setLoadingId(null);
-        }
-    };
-    
+    const handleNoShow = useCallback(async (
+        ticketId: string
+    ): Promise<ApiResponse> => {
+        setLoadingId(ticketId);
+        shouldAutoStart.current = true;
+        markNoShow(ticketId).catch(() => {});
+        setLoadingId(null);
+        return { ok: true };
+    }, []);
+
+    const hasActiveService = enrichedTickets.some(t => t.status === "in_progress");
+    const current = enrichedTickets.find(t => t.status === "in_progress") ?? null;
+    const waitingTickets = enrichedTickets.filter(t => t.status === "waiting");
+
     return {
-        tickets: enrichedTickets,
-        services,
-        current,
-        hasActiveService,
-        servicesMap,
+        tickets: enrichedTickets,   
+        services,                   
+        current,                    
+        loading,
         loadingId,
+        hasActiveService,
+        waitingTickets,
         handleReserve,
         startServiceHandler,
-        handleFinish,
-        handleNoShow
+        handleFinish,               
+        handleNoShow,               
     };
 }

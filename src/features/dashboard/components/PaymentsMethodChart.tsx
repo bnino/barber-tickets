@@ -12,6 +12,10 @@ import {
 } from "recharts";
 import EmptyState from "./EmptyState";
 
+type TooltipEntry = {
+    payload: { count: number };
+};
+
 
 type Props = {
     data: {
@@ -80,10 +84,11 @@ export default function PaymentsMethodChart({ data }: Props) {
                             itemStyle={{
                                 color: "#000",
                             }}
-                            formatter={(value, name, props: any) => {
+                            formatter={(value, name, entry: unknown) => {
+                                const typed = entry as TooltipEntry;
                                 const amount = typeof value === "number" ? value : 0;
                                 return [
-                                    `${formatCOP(amount)} (${props.payload.count} pagos)`,
+                                    `${formatCOP(amount)} (${typed.payload.count} pagos)`,
                                     name
                                 ];
                             }}

@@ -1,6 +1,13 @@
+type TooltipPayloadItem = {
+    payload: {
+        count?: number;
+        value?: number;
+    };
+};
+
 type Props = {
     active?: boolean;
-    payload?: any[];
+    payload?: TooltipPayloadItem[];
     label?: string;
 };
 

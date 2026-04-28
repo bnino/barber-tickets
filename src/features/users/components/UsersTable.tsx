@@ -1,5 +1,5 @@
 import { useUsers } from "../hooks/useUsers";
-import { useAlert } from "../../tickets/hooks/useAlert";
+import { useAlert } from "../../../shared/hooks/useAlert";
 
 export default function UsersTable() {
     const { users, updateRole } = useUsers();
@@ -20,7 +20,7 @@ export default function UsersTable() {
             await updateRole(userId, newRole as "admin" | "user");
 
             alert.success("Rol actualizado correctamente");
-        } catch (error) {
+        } catch {
             alert.error("Error al actualizar rol");
         }
     };
