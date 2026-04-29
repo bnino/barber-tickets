@@ -48,8 +48,8 @@ export default function Home() {
                         id={current.id}
                         clientName={current.clientNameFormatted}
                         serviceName={current.serviceName}
+                        timeStart={current.time_start}
                         user={user}
-
                         onFinish={(id) => {
 
                             const ticket = tickets.find(t => t.id === id);

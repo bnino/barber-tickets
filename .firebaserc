@@ -1,0 +1,12 @@
+{
+  "projects": {
+    "default": "barberia-tickets-prod-94b7a"
+  },
+  "targets": {
+    "barberia-tickets-prod-94b7a": {
+      "hosting": {
+        "app": ["barberialafama"]
+      }
+    }
+  }
+}

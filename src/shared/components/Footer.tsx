@@ -32,7 +32,9 @@ export default function Footer() {
                         Brayan Niño
                     </a>
                 </p>
-
+                <span className="text-xs text-gray-300">
+                    v{__APP_VERSION__}
+                </span>
             </div>
         </footer>
     );

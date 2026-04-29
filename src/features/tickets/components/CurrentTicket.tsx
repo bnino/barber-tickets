@@ -1,17 +1,22 @@
 import { memo } from "react";
 import type { AppUser } from "../../auth/context/AuthContext";
+import type { Timestamp } from "firebase/firestore";
+import { useElapsedTime } from "../../../shared/hooks/useElapsedTime";
 
 type Props = {
     id: string;
     clientName: string;
     serviceName: string;
+    timeStart?: Timestamp;
     onFinish: (id: string) => void;
     onNoShow: (id: string) => void;
     loading: boolean;
     user: AppUser | null;
 };
 
-function CurrentTicket({ id, clientName, serviceName, onFinish, onNoShow, loading, user }: Props) {
+function CurrentTicket({ id, clientName, serviceName, timeStart, onFinish, onNoShow, loading, user }: Props) {
+    const elapsed = useElapsedTime(timeStart);
+
     return (
         <div
             className="relative mb-6 flex h-40 flex-col items-center justify-center rounded-2xl text-white shadow-md p-6"
@@ -27,6 +32,10 @@ function CurrentTicket({ id, clientName, serviceName, onFinish, onNoShow, loadin
                 <span className="text-sm font-medium opacity-75 mt-1 block">
                     {serviceName || "Servicio"}
                 </span>
+            </div>
+
+            <div className="absolute bottom-3 left-4">
+                <span className="text-xs font-mono opacity-70">⏱ {elapsed}</span>
             </div>
 
             {user?.role === "admin" && (
