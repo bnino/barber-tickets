@@ -2,6 +2,7 @@ import { useEffect } from "react";
 
 import { useTickets } from "../features/tickets/hooks/useTickets";
 import { useSettings } from "../features/settings/hooks/useSettings";
+import { useElapsedTime } from "../shared/hooks/useElapsedTime";
 
 export default function PublicQueue() {
 
@@ -15,9 +16,11 @@ export default function PublicQueue() {
         if (!current) return;
 
         const audio = new Audio("/notification.mp3");
-        audio.play().catch(() => {});
+        audio.play().catch(() => { });
 
     }, [current?.id]);
+
+    const elapsed = useElapsedTime(current?.time_start);
 
     return (
         <div className="min-h-screen bg-black text-white p-8">
@@ -31,7 +34,6 @@ export default function PublicQueue() {
                 </span>
             </div>
 
-            {/* Turno actual */}
             <div className="text-center mb-10">
                 <p className="text-2xl opacity-70">Atendiendo</p>
 
@@ -42,9 +44,13 @@ export default function PublicQueue() {
                 <p className="text-2xl opacity-80 mt-2">
                     {current?.serviceName || ""}
                 </p>
+                {current && (
+                    <p className="text-3xl font-mono opacity-60 mt-3">
+                        ⏱ {elapsed}
+                    </p>
+                )}
             </div>
 
-            {/* Siguientes */}
             <div className="mt-10">
                 <p className="text-2xl mb-4 opacity-70">En espera</p>
 

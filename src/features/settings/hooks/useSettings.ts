@@ -13,7 +13,7 @@ export function useSettings() {
 
     return {
         settings,
-        companyName: settings?.company_name || "Mi Negocio",
+        companyName: settings?.company_name || "BarberApp",
         isOpen: settings?.is_open ?? true,
         workingDays: settings?.working_days || []
     };

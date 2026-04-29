@@ -33,7 +33,7 @@ export default function Register() {
             setLoading(true);
             await registerUser(cleanEmail, password, cleanName);
             navigate("/");
-        } catch (error) {
+        } catch{
             setError("Error al registrarse");
         } finally {
             setLoading(false);

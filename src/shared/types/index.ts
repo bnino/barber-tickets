@@ -18,6 +18,7 @@ export type Ticket = {
   date?: Timestamp;
   createdAt?: Timestamp;
   started_at?: Timestamp;
+  time_start?: Timestamp;
   finished_at?: Timestamp;
 };
 
