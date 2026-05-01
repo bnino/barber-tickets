@@ -108,7 +108,15 @@ export default function Home() {
                 </div>
                 <div className="mt-7.5 p-5 rounded-xl bg-gray-50 border border-gray-200 text-center">
 
-                    <button disabled={!isOpen} className="px-6 py-3.5 text-base font-semibold rounded-lg border-none cursor-pointer bg-indigo-600 text-white transition-transform duration-150 ease-in-out hover:bg-indigo-700 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed" onClick={() => setShowForm(prev => !prev)}>
+                    <button
+                        disabled={!isOpen}
+                        className="px-6 py-3.5 text-base font-semibold rounded-lg border-none cursor-pointer bg-indigo-600 text-white transition-transform duration-150 ease-in-out hover:bg-indigo-700 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                        onClick={() => {
+                            if (!showForm && user?.displayName && user.role === "user") {
+                                setClientName(user.displayName);
+                            }
+                            setShowForm(prev => !prev)
+                        }}>
                         {isOpen ? "Reservar turno" : "Negocio cerrado"}
                     </button>
 
@@ -126,7 +134,7 @@ export default function Home() {
                                     alert.warning("Ingresa un nombre válido");
                                     return;
                                 }
-                                
+
                                 const res = await handleReserve(cleanName, serviceId);
                                 if (res.ok) {
                                     setClientName("");

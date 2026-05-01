@@ -108,6 +108,7 @@ src/shared/components/Footer.tsx
 src/shared/components/Navbar.tsx
 src/shared/hooks/useAlert.ts
 src/shared/hooks/useDeviceDetect.ts
+src/shared/hooks/useElapsedTime.ts
 src/shared/hooks/useOnlineStatus.ts
 src/shared/services/firebaseService.ts
 src/shared/types/apiResponse.ts
@@ -128,18 +129,27 @@ vite.config.ts
 <files>
 This section contains the contents of the repository's files.
 
+<file path=".env.example">
+VITE_FIREBASE_API_KEY=
+VITE_FIREBASE_AUTH_DOMAIN=
+VITE_FIREBASE_PROJECT_ID=
+VITE_FIREBASE_STORAGE_BUCKET=
+VITE_FIREBASE_MESSAGING_SENDER_ID=
+VITE_FIREBASE_APP_ID=
+</file>
+
 <file path=".firebase/hosting.ZGlzdA.cache">
-workbox-3e722498.js,1777416160134,033b40cea9aec81f9aa001ee9d3cd8bc6380101697ca87c7e7eab60c63f65576
-sw.js,1777416160131,129b2d916abae3b83321fe01ba6c65e151e0a2505b790ee05e1b96777a211e85
-registerSW.js,1777416137556,09e15d1438017c065a3281739cb5506aeaf7b3047bc3ada992da01d4497c2d43
 notification.mp3,1776636930364,d619f5541a29002e7f2e40240e08abc55ef2cecb1a9fcaef13b36d865042d262
-manifest.webmanifest,1777416137551,f9829882480d99b1c0549b85225c68d7321b0f224bd6fd495ab45fdc90df02a6
-index.html,1777416137551,fdcc6c6faf1634ccb64238107557f8be66cf614a3e74c3e70152b9368683d902
 icons/icon-512.png,1777255939886,cc49a446eb31e64aa95021bc00a1c3ded4580456b3cd1b9224d496fb8afef1c5
 icons/icon-192.png,1777255939894,33f74897ec6a56e0dcff73ae55c5c8e146335b63de1e1fe8243daa2455258563
 icons/favicon.ico,1777337867565,ea418e6046866471032f8dd732b5367ee493ad07ba0de963d8debe299bba4097
-assets/index-QPF7DQcf.css,1777416137551,fbe8ab5c1b43ad8cf2952038881c154f301d23a0b2f8f837762b489c60891ca4
-assets/index-3h5z2M-2.js,1777416137556,c0672ca6325023c1e15fa99479d4e3c52b1a65e2b2aa1c83ba3fff31966ad2fa
+manifest.webmanifest,1777421436219,f9829882480d99b1c0549b85225c68d7321b0f224bd6fd495ab45fdc90df02a6
+index.html,1777421436220,cdbcbe934fd9736a6e9b81b3030e80580f23c750a79cf9b8b7c21c85b5e73ff8
+registerSW.js,1777421436220,09e15d1438017c065a3281739cb5506aeaf7b3047bc3ada992da01d4497c2d43
+workbox-3e722498.js,1777421438960,033b40cea9aec81f9aa001ee9d3cd8bc6380101697ca87c7e7eab60c63f65576
+sw.js,1777421438954,92912a6c6cbe790d1d5cc0dcaa7c104633d1b482814b8681b0c388658e3c6b9d
+assets/index-DGv_FSah.css,1777421436217,a553a6a86b9c87ff78a98db2afda44d2b7bbb0d727128a6ac1d5d90abce0169e
+assets/index-W6rCkASC.js,1777421436221,10fcade3a4405265644268cd7269a801f915ca4fd273309016d7b973735ff65c
 </file>
 
 <file path=".firebaserc">
@@ -155,59 +165,6 @@ assets/index-3h5z2M-2.js,1777416137556,c0672ca6325023c1e15fa99479d4e3c52b1a65e2b
     }
   }
 }
-</file>
-
-<file path="firebase.json">
-{
-  "hosting": {
-    "target": "app",
-    "public": "dist",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ],
-    "rewrites": [
-      {
-        "source": "**",
-        "destination": "/index.html"
-      }
-    ],
-    "headers": [
-      {
-        "source": "/**",
-        "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "no-cache"
-          }
-        ]
-      },
-      {
-        "source": "/assets/**",
-        "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "public, max-age=31536000, immutable"
-          }
-        ]
-      }
-    ]
-  }
-}
-</file>
-
-<file path="src/vite-env.d.ts">
-declare const __APP_VERSION__: string;
-</file>
-
-<file path=".env.example">
-VITE_FIREBASE_API_KEY=
-VITE_FIREBASE_AUTH_DOMAIN=
-VITE_FIREBASE_PROJECT_ID=
-VITE_FIREBASE_STORAGE_BUCKET=
-VITE_FIREBASE_MESSAGING_SENDER_ID=
-VITE_FIREBASE_APP_ID=
 </file>
 
 <file path=".gitignore">
@@ -251,105 +208,6 @@ Thumbs.db
 
 <file path="dev-dist/registerSW.js">
 if('serviceWorker' in navigator) navigator.serviceWorker.register('/dev-sw.js?dev-sw', { scope: '/', type: 'classic' })
-</file>
-
-<file path="dev-dist/sw.js">
-/**
- * Copyright 2018 Google Inc. All Rights Reserved.
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *     http://www.apache.org/licenses/LICENSE-2.0
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-// If the loader is already loaded, just stop.
-if (!self.define) {
-  let registry = {};
-
-  // Used for `eval` and `importScripts` where we can't get script URL by other means.
-  // In both cases, it's safe to use a global var because those functions are synchronous.
-  let nextDefineUri;
-
-  const singleRequire = (uri, parentUri) => {
-    uri = new URL(uri + ".js", parentUri).href;
-    return registry[uri] || (
-      
-        new Promise(resolve => {
-          if ("document" in self) {
-            const script = document.createElement("script");
-            script.src = uri;
-            script.onload = resolve;
-            document.head.appendChild(script);
-          } else {
-            nextDefineUri = uri;
-            importScripts(uri);
-            resolve();
-          }
-        })
-      
-      .then(() => {
-        let promise = registry[uri];
-        if (!promise) {
-          throw new Error(`Module ${uri} didn’t register its module`);
-        }
-        return promise;
-      })
-    );
-  };
-
-  self.define = (depsNames, factory) => {
-    const uri = nextDefineUri || ("document" in self ? document.currentScript.src : "") || location.href;
-    if (registry[uri]) {
-      // Module is already loading or loaded.
-      return;
-    }
-    let exports = {};
-    const require = depUri => singleRequire(depUri, uri);
-    const specialDeps = {
-      module: { uri },
-      exports,
-      require
-    };
-    registry[uri] = Promise.all(depsNames.map(
-      depName => specialDeps[depName] || require(depName)
-    )).then(deps => {
-      factory(...deps);
-      return exports;
-    });
-  };
-}
-define(['./workbox-38bb0eb2'], (function (workbox) { 'use strict';
-
-  self.skipWaiting();
-  workbox.clientsClaim();
-
-  /**
-   * The precacheAndRoute() method efficiently caches and responds to
-   * requests for URLs in the manifest.
-   * See https://goo.gl/S9QRab
-   */
-  workbox.precacheAndRoute([{
-    "url": "registerSW.js",
-    "revision": "3ca0b8505b4bec776b69afdba2768812"
-  }, {
-    "url": "/index.html",
-    "revision": "0.fh7u3qrdc5g"
-  }], {});
-  workbox.cleanupOutdatedCaches();
-  workbox.registerRoute(new workbox.NavigationRoute(workbox.createHandlerBoundToURL("/index.html"), {
-    allowlist: [/^\/$/],
-    denylist: [/^\/api/]
-  }));
-  workbox.registerRoute(/^https:\/\/firestore\.googleapis\.com\/.*/i, new workbox.NetworkOnly(), 'GET');
-  workbox.registerRoute(/^https:\/\/.*\.googleapis\.com\/.*/i, new workbox.NetworkOnly(), 'GET');
-  self.__WB_DISABLE_DEV_LOGS = true;
-
-}));
 </file>
 
 <file path="dev-dist/workbox-38bb0eb2.js">
@@ -7698,6 +7556,46 @@ export default defineConfig([
 ])
 </file>
 
+<file path="firebase.json">
+{
+  "hosting": {
+    "target": "app",
+    "public": "dist",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ],
+    "headers": [
+      {
+        "source": "/**",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache"
+          }
+        ]
+      },
+      {
+        "source": "/assets/**",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=31536000, immutable"
+          }
+        ]
+      }
+    ]
+  }
+}
+</file>
+
 <file path="src/App.css">
 @import "tailwindcss";
 </file>
@@ -7846,50 +7744,6 @@ export function useUsers() {
 }
 </file>
 
-<file path="src/shared/components/Footer.tsx">
-export default function Footer() {
-    const year = new Date().getFullYear();
-
-    return (
-        <footer className="bg-white border-t border-gray-200 mt-auto">
-            <div className="max-w-5xl mx-auto px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-3">
-
-                {/* Marca */}
-                <div className="flex items-center gap-2">
-                    <span className="text-lg">💈</span>
-                    <span className="font-bold text-gray-800 text-sm">BarberApp</span>
-                    <span className="text-gray-300 text-xs">|</span>
-                    <span className="text-gray-400 text-xs">
-                        Sistema de gestión de turnos en barberias
-                    </span>
-                </div>
-
-                {/* Centro */}
-                <p className="text-xs text-gray-400 text-center">
-                    © {year} BarberApp. Todos los derechos reservados.
-                </p>
-
-                {/* Autor */}
-                <p className="text-xs text-gray-400">
-                    Desarrollado por{" "}
-
-                    <a href="https://github.com/bnino"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-gray-700 font-semibold hover:text-black transition hover:underline"
-                    >
-                        Brayan Niño
-                    </a>
-                </p>
-                <span className="text-xs text-gray-300">
-                    v{__APP_VERSION__}
-                </span>
-            </div>
-        </footer>
-    );
-}
-</file>
-
 <file path="src/shared/hooks/useAlert.ts">
 import Swal, { type SweetAlertIcon } from "sweetalert2";
 
@@ -7945,6 +7799,41 @@ export function useDeviceDetect() {
   const isTVByParam = new URLSearchParams(window.location.search).has("tv");
 
   return { isTV: isTVByAgent || isTVByParam };
+}
+</file>
+
+<file path="src/shared/hooks/useElapsedTime.ts">
+import { useEffect, useState } from "react";
+import type { Timestamp } from "firebase/firestore";
+
+export function useElapsedTime(startedAt?: Timestamp) {
+    const [elapsed, setElapsed] = useState("00:00");
+
+    useEffect(() => {
+        if (!startedAt) {
+            setElapsed("00:00");
+            return;
+        }
+
+        const startMs = startedAt.toDate().getTime();
+
+        const tick = () => {
+            const diff = Math.max(0, Date.now() - startMs);
+            const totalSeconds = Math.floor(diff / 1000);
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+
+            setElapsed(
+                `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`
+            );
+        };
+
+        tick();
+        const interval = setInterval(tick, 1000);
+        return () => clearInterval(interval);
+    }, [startedAt]);
+
+    return elapsed;
 }
 </file>
 
@@ -8041,6 +7930,12 @@ export const sanitizeName = (name: string) => {
 export const sanitizeEmail = (email: string) => {
   return sanitizeText(email).toLowerCase();
 };
+</file>
+
+<file path="src/vite-env.d.ts">
+/// <reference types="vite/client" />
+
+declare const __APP_VERSION__: string;
 </file>
 
 <file path="tailwind.config.ts">
@@ -8147,6 +8042,105 @@ export default {
   },
   "include": ["vite.config.ts"]
 }
+</file>
+
+<file path="dev-dist/sw.js">
+/**
+ * Copyright 2018 Google Inc. All Rights Reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+// If the loader is already loaded, just stop.
+if (!self.define) {
+  let registry = {};
+
+  // Used for `eval` and `importScripts` where we can't get script URL by other means.
+  // In both cases, it's safe to use a global var because those functions are synchronous.
+  let nextDefineUri;
+
+  const singleRequire = (uri, parentUri) => {
+    uri = new URL(uri + ".js", parentUri).href;
+    return registry[uri] || (
+      
+        new Promise(resolve => {
+          if ("document" in self) {
+            const script = document.createElement("script");
+            script.src = uri;
+            script.onload = resolve;
+            document.head.appendChild(script);
+          } else {
+            nextDefineUri = uri;
+            importScripts(uri);
+            resolve();
+          }
+        })
+      
+      .then(() => {
+        let promise = registry[uri];
+        if (!promise) {
+          throw new Error(`Module ${uri} didn’t register its module`);
+        }
+        return promise;
+      })
+    );
+  };
+
+  self.define = (depsNames, factory) => {
+    const uri = nextDefineUri || ("document" in self ? document.currentScript.src : "") || location.href;
+    if (registry[uri]) {
+      // Module is already loading or loaded.
+      return;
+    }
+    let exports = {};
+    const require = depUri => singleRequire(depUri, uri);
+    const specialDeps = {
+      module: { uri },
+      exports,
+      require
+    };
+    registry[uri] = Promise.all(depsNames.map(
+      depName => specialDeps[depName] || require(depName)
+    )).then(deps => {
+      factory(...deps);
+      return exports;
+    });
+  };
+}
+define(['./workbox-38bb0eb2'], (function (workbox) { 'use strict';
+
+  self.skipWaiting();
+  workbox.clientsClaim();
+
+  /**
+   * The precacheAndRoute() method efficiently caches and responds to
+   * requests for URLs in the manifest.
+   * See https://goo.gl/S9QRab
+   */
+  workbox.precacheAndRoute([{
+    "url": "registerSW.js",
+    "revision": "3ca0b8505b4bec776b69afdba2768812"
+  }, {
+    "url": "/index.html",
+    "revision": "0.hqdcstfl25g"
+  }], {});
+  workbox.cleanupOutdatedCaches();
+  workbox.registerRoute(new workbox.NavigationRoute(workbox.createHandlerBoundToURL("/index.html"), {
+    allowlist: [/^\/$/],
+    denylist: [/^\/api/]
+  }));
+  workbox.registerRoute(/^https:\/\/firestore\.googleapis\.com\/.*/i, new workbox.NetworkOnly(), 'GET');
+  workbox.registerRoute(/^https:\/\/.*\.googleapis\.com\/.*/i, new workbox.NetworkOnly(), 'GET');
+  self.__WB_DISABLE_DEV_LOGS = true;
+
+}));
 </file>
 
 <file path="README.md">
@@ -8528,29 +8522,6 @@ export function useServices() {
 }
 </file>
 
-<file path="src/features/settings/hooks/useSettings.ts">
-import { useEffect, useState } from "react";
-import { subscribeToSettings } from "../services/settingsService";
-
-import type { Settings } from "../../../shared/types";
-
-export function useSettings() {
-    const [settings, setSettings] = useState<Settings | null>(null);
-
-    useEffect(() => {
-        const unsub = subscribeToSettings(setSettings);
-        return () => unsub();
-    }, []);
-
-    return {
-        settings,
-        companyName: settings?.company_name || "BarberApp",
-        isOpen: settings?.is_open ?? true,
-        workingDays: settings?.working_days || []
-    };
-}
-</file>
-
 <file path="src/features/settings/hooks/useSettingsForm.ts">
 import { useEffect, useState } from "react";
 import { useSettings } from "./useSettings";
@@ -8922,6 +8893,50 @@ export default function ChartTooltip({ active, payload, label }: Props) {
 }
 </file>
 
+<file path="src/shared/components/Footer.tsx">
+export default function Footer() {
+    const year = new Date().getFullYear();
+
+    return (
+        <footer className="bg-white border-t border-gray-200 mt-auto">
+            <div className="max-w-5xl mx-auto px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-3">
+
+                {/* Marca */}
+                <div className="flex items-center gap-2">
+                    <span className="text-lg">💈</span>
+                    <span className="font-bold text-gray-800 text-sm">BarberApp</span>
+                    <span className="text-gray-300 text-xs">|</span>
+                    <span className="text-gray-400 text-xs">
+                        Sistema de gestión de turnos en barberias
+                    </span>
+                </div>
+
+                {/* Centro */}
+                <p className="text-xs text-gray-400 text-center">
+                    © {year} BarberApp. Todos los derechos reservados.
+                </p>
+
+                {/* Autor */}
+                <p className="text-xs text-gray-400">
+                    Desarrollado por{" "}
+
+                    <a href="https://github.com/bnino"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-gray-700 font-semibold hover:text-black transition hover:underline"
+                    >
+                        Brayan Niño
+                    </a>
+                </p>
+                <span className="text-xs text-gray-300">
+                    v{__APP_VERSION__}
+                </span>
+            </div>
+        </footer>
+    );
+}
+</file>
+
 <file path="src/shared/utils/chartColors.ts">
 const COLORS = [
   "#4f46e5", // indigo-600 — principal
@@ -8953,95 +8968,6 @@ export const handleError = (error: unknown, message = "Ocurrió un error") => {
         message
     };
 };
-</file>
-
-<file path="vite.config.ts">
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
-import tailwindcss from "@tailwindcss/vite";
-import { VitePWA } from "vite-plugin-pwa";
-
-export default defineConfig({
-  define: {
-    __APP_VERSION__: JSON.stringify(process.env.npm_package_version),
-  },
-  plugins: [
-    react(),
-    tailwindcss(),
-    VitePWA({
-      registerType: "autoUpdate",
-      devOptions: {
-        enabled: false,
-      },
-      workbox: {
-        globPatterns: ["**/*.{js,css,html,ico,png,svg,mp3}"],
-        navigateFallback: "/index.html",
-        disableDevLogs: true,
-        navigateFallbackDenylist: [/^\/api/],
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/firestore\.googleapis\.com\/.*/i,
-            handler: "NetworkOnly",
-          },
-          {
-            urlPattern: /^https:\/\/.*\.googleapis\.com\/.*/i,
-            handler: "NetworkOnly",
-          },
-        ],
-      },
-      manifest: {
-        name: "BarberApp",
-        short_name: "BarberApp",
-        description: "Sistema de gestión de turnos para barberías",
-        theme_color: "#0f766e",
-        background_color: "#f9fafb",
-        display: "standalone",
-        orientation: "portrait",
-        scope: "/",
-        start_url: "/",
-        icons: [
-          {
-            src: "/icons/icon-192.png",
-            sizes: "192x192",
-            type: "image/png",
-          },
-          {
-            src: "/icons/icon-512.png",
-            sizes: "512x512",
-            type: "image/png",
-          },
-          {
-            src: "/icons/icon-512.png",
-            sizes: "512x512",
-            type: "image/png",
-            purpose: "maskable",
-          },
-        ],
-      },
-    }),
-  ],
-});
-</file>
-
-<file path="index.html">
-<!doctype html>
-<html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/x-icon" href="/icons/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#0f766e" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content="BarberApp" />
-    <title>BarberApp</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
-</html>
 </file>
 
 <file path="src/features/announcements/components/CreateAnnouncementModal.tsx">
@@ -9414,6 +9340,29 @@ export default function FilterTabs({ filter, setFilter }: Props) {
 }
 </file>
 
+<file path="src/features/settings/hooks/useSettings.ts">
+import { useEffect, useState } from "react";
+import { subscribeToSettings } from "../services/settingsService";
+
+import type { Settings } from "../../../shared/types";
+
+export function useSettings() {
+    const [settings, setSettings] = useState<Settings | null>(null);
+
+    useEffect(() => {
+        const unsub = subscribeToSettings(setSettings);
+        return () => unsub();
+    }, []);
+
+    return {
+        settings,
+        companyName: settings?.company_name || "BarberApp",
+        isOpen: settings?.is_open ?? true,
+        workingDays: settings?.working_days || []
+    };
+}
+</file>
+
 <file path="src/features/tickets/components/FinishModal.tsx">
 import { memo } from "react";
 
@@ -9564,60 +9513,93 @@ export const auth = getAuth(app);
 export default app;
 </file>
 
-<file path="src/shared/types/index.ts">
-import type { Timestamp } from "firebase/firestore";
+<file path="vite.config.ts">
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
+import { VitePWA } from "vite-plugin-pwa";
 
-export type TicketStatus =
-    | "waiting"
-    | "in_progress"
-    | "done"
-    | "no_show";
+export default defineConfig({
+  define: {
+    __APP_VERSION__: JSON.stringify(process.env.npm_package_version),
+  },
+  plugins: [
+    react(),
+    tailwindcss(),
+    VitePWA({
+      registerType: "autoUpdate",
+      devOptions: {
+        enabled: true,
+      },
+      workbox: {
+        globPatterns: ["**/*.{js,css,html,ico,png,svg,mp3}"],
+        navigateFallback: "/index.html",
+        disableDevLogs: true,
+        navigateFallbackDenylist: [/^\/api/],
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/firestore\.googleapis\.com\/.*/i,
+            handler: "NetworkOnly",
+          },
+          {
+            urlPattern: /^https:\/\/.*\.googleapis\.com\/.*/i,
+            handler: "NetworkOnly",
+          },
+        ],
+      },
+      manifest: {
+        name: "BarberApp",
+        short_name: "BarberApp",
+        description: "Sistema de gestión de turnos para barberías",
+        theme_color: "#0f766e",
+        background_color: "#f9fafb",
+        display: "standalone",
+        orientation: "portrait",
+        scope: "/",
+        start_url: "/",
+        icons: [
+          {
+            src: "/icons/icon-192.png",
+            sizes: "192x192",
+            type: "image/png",
+          },
+          {
+            src: "/icons/icon-512.png",
+            sizes: "512x512",
+            type: "image/png",
+          },
+          {
+            src: "/icons/icon-512.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "maskable",
+          },
+        ],
+      },
+    }),
+  ],
+});
+</file>
 
-export type Ticket = {
-  id: string;
-  client_name: string;
-  clientNameFormatted: string;
-  service_id: string;
-  serviceName?: string;
-  status: TicketStatus;
-  price?: number; 
-  payment_method?: "cash" | "nequi";
-  date?: Timestamp;
-  createdAt?: Timestamp;
-  started_at?: Timestamp;
-  finished_at?: Timestamp;
-};
-
-export type Service = {
-  id?: string;
-  name: string;
-  price: number;
-  createdAt?: Timestamp;
-};
-
-export type UserDB = {
-  id: string;
-  name: string;
-  email: string;
-  role: "admin" | "user";
-  createdAt?: Timestamp;
-};
-
-export type Settings = {
-  company_name: string;
-  is_open: boolean;
-  working_days: string[];
-};
-
-export type Announcement = {
-  id?: string;
-  message: string;
-  type: "info" | "warning" | "success";
-  startDate: Timestamp;
-  endDate: Timestamp;
-  active?: boolean;
-  createdAt?: Timestamp;
-};
+<file path="index.html">
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/x-icon" href="/icons/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0f766e" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="BarberApp" />
+    <title>BarberApp</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
 </file>
 
 <file path="src/features/dashboard/components/IncomeByServiceChart.tsx">
@@ -9860,66 +9842,6 @@ export default function ServiceList() {
 }
 </file>
 
-<file path="src/features/tickets/components/CurrentTicket.tsx">
-import { memo } from "react";
-import type { AppUser } from "../../auth/context/AuthContext";
-
-type Props = {
-    id: string;
-    clientName: string;
-    serviceName: string;
-    onFinish: (id: string) => void;
-    onNoShow: (id: string) => void;
-    loading: boolean;
-    user: AppUser | null;
-};
-
-function CurrentTicket({ id, clientName, serviceName, onFinish, onNoShow, loading, user }: Props) {
-    return (
-        <div
-            className="relative mb-6 flex h-40 flex-col items-center justify-center rounded-2xl text-white shadow-md p-6"
-            style={{ background: "linear-gradient(135deg, #0f766e 0%, #059669 100%)" }}
-        >
-            <div className="text-center">
-                <h2 className="text-xs font-semibold uppercase tracking-widest opacity-75 mb-1">
-                    ✂️ Atendiendo ahora
-                </h2>
-                <strong className="block text-3xl font-bold leading-tight">
-                    {clientName}
-                </strong>
-                <span className="text-sm font-medium opacity-75 mt-1 block">
-                    {serviceName || "Servicio"}
-                </span>
-            </div>
-
-            {user?.role === "admin" && (
-                <div className="absolute bottom-3 right-4 flex flex-col items-end gap-1.5">
-                    <button
-                        onClick={() => onFinish(id)}
-                        disabled={loading}
-                        className="rounded-lg px-4 py-1.5 text-sm font-semibold transition cursor-pointer disabled:opacity-50"
-                        style={{ background: "rgba(255,255,255,0.18)", border: "1px solid rgba(255,255,255,0.35)", color: "white" }}
-                    >
-                        {loading ? "Cargando..." : "Finalizar"}
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => onNoShow(id)}
-                        disabled={loading}
-                        className="text-xs font-medium underline underline-offset-2 disabled:opacity-50 cursor-pointer"
-                        style={{ color: "rgba(255,255,255,0.7)", background: "none", border: "none" }}
-                    >
-                        {loading ? "Procesando..." : "No llegó / Cancelar"}
-                    </button>
-                </div>
-            )}
-        </div>
-    );
-}
-
-export default memo(CurrentTicket);
-</file>
-
 <file path="src/features/tickets/components/ReserveForm.tsx">
 import { memo } from "react";
 import type { Service } from "../../../shared/types";
@@ -9976,149 +9898,61 @@ function ReserveForm({
 export default memo(ReserveForm);
 </file>
 
-<file path="src/pages/Register.tsx">
-import { useState } from "react";
-import { registerUser } from "../features/auth/services/authService";
-import { useNavigate, Link } from "react-router-dom";
+<file path="src/shared/types/index.ts">
+import type { Timestamp } from "firebase/firestore";
 
-import { sanitizeName, sanitizeEmail } from "../shared/utils/sanitize";
+export type TicketStatus =
+    | "waiting"
+    | "in_progress"
+    | "done"
+    | "no_show";
 
-export default function Register() {
-    const [name, setName] = useState("");
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
+export type Ticket = {
+  id: string;
+  client_name: string;
+  clientNameFormatted: string;
+  service_id: string;
+  serviceName?: string;
+  status: TicketStatus;
+  price?: number; 
+  payment_method?: "cash" | "nequi";
+  date?: Timestamp;
+  createdAt?: Timestamp;
+  started_at?: Timestamp;
+  time_start?: Timestamp;
+  finished_at?: Timestamp;
+};
 
-    const cleanName = sanitizeName(name);
-    const cleanEmail = sanitizeEmail(email);
+export type Service = {
+  id?: string;
+  name: string;
+  price: number;
+  createdAt?: Timestamp;
+};
 
-    const navigate = useNavigate();
-    const handleRegister = async (e: React.FormEvent) => {
-        e.preventDefault();
+export type UserDB = {
+  id: string;
+  name: string;
+  email: string;
+  role: "admin" | "user";
+  createdAt?: Timestamp;
+};
 
-        if (!cleanName || !cleanEmail || !password) {
-            setError("Completa todos los campos");
-            return;
-        }
+export type Settings = {
+  company_name: string;
+  is_open: boolean;
+  working_days: string[];
+};
 
-        if (password.length < 6) {
-            setError("La contraseña debe tener al menos 6 caracteres");
-            return;
-        }
-
-        try {
-            setError("");
-            setLoading(true);
-            await registerUser(cleanEmail, password, cleanName);
-            navigate("/");
-        } catch{
-            setError("Error al registrarse");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-            <div className="bg-white p-6 rounded-2xl shadow-lg w-full max-w-sm">
-
-                <h1 className="text-2xl font-bold mb-1 text-center">
-                    Crear cuenta
-                </h1>
-
-                <p className="text-sm text-gray-500 mb-4 text-center">
-                    Regístrate para gestionar tu barbería
-                </p>
-
-                <form onSubmit={handleRegister} className="flex flex-col gap-3">
-
-                    <input
-                        placeholder="Nombre"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        className="border p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                    />
-
-                    <input
-                        placeholder="Correo electrónico"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="border p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                    />
-
-                    <input
-                        type="password"
-                        placeholder="Contraseña"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="border p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                    />
-
-                    {error && (
-                        <p className="text-red-500 text-sm text-center">{error}</p>
-                    )}
-
-                    <button
-                        disabled={loading}
-                        className="bg-indigo-600 text-white p-2 rounded-lg mt-2 hover:bg-indigo-700 transition disabled:opacity-50 cursor-pointer"
-                    >
-                        {loading ? "Creando..." : "Registrarse"}
-                    </button>
-                </form>
-
-                <p className="text-xs text-center mt-4 text-gray-500">
-                    ¿Ya tienes cuenta?{" "}
-                    <Link to="/login" className="text-black font-semibold">
-                        Inicia sesión
-                    </Link>
-                </p>
-            </div>
-        </div>
-    );
-}
-</file>
-
-<file path="package.json">
-{
-  "name": "barber-tickets",
-  "private": true,
-  "version": "1.0.0",
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
-    "lint": "eslint .",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "firebase": "^12.6.0",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
-    "react-router-dom": "^7.14.1",
-    "recharts": "^3.8.1",
-    "sweetalert2": "^11.26.24"
-  },
-  "devDependencies": {
-    "@eslint/js": "^9.39.1",
-    "@tailwindcss/vite": "^4.1.18",
-    "@types/node": "^24.10.1",
-    "@types/react": "^19.2.5",
-    "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^5.1.1",
-    "autoprefixer": "^10.4.23",
-    "eslint": "^9.39.1",
-    "eslint-plugin-react-hooks": "^7.0.1",
-    "eslint-plugin-react-refresh": "^0.4.24",
-    "globals": "^16.5.0",
-    "postcss": "^8.5.6",
-    "tailwindcss": "^4.1.18",
-    "typescript": "~5.9.3",
-    "typescript-eslint": "^8.46.4",
-    "vite": "^7.2.4",
-    "vite-plugin-pwa": "^1.2.0"
-  }
-}
+export type Announcement = {
+  id?: string;
+  message: string;
+  type: "info" | "warning" | "success";
+  startDate: Timestamp;
+  endDate: Timestamp;
+  active?: boolean;
+  createdAt?: Timestamp;
+};
 </file>
 
 <file path="src/features/dashboard/components/IncomeChart.tsx">
@@ -10278,6 +10112,75 @@ export default function PaymentsMethodChart({ data }: Props) {
         </div>
     );
 }
+</file>
+
+<file path="src/features/tickets/components/CurrentTicket.tsx">
+import { memo } from "react";
+import type { AppUser } from "../../auth/context/AuthContext";
+import type { Timestamp } from "firebase/firestore";
+import { useElapsedTime } from "../../../shared/hooks/useElapsedTime";
+
+type Props = {
+    id: string;
+    clientName: string;
+    serviceName: string;
+    timeStart?: Timestamp;
+    onFinish: (id: string) => void;
+    onNoShow: (id: string) => void;
+    loading: boolean;
+    user: AppUser | null;
+};
+
+function CurrentTicket({ id, clientName, serviceName, timeStart, onFinish, onNoShow, loading, user }: Props) {
+    const elapsed = useElapsedTime(timeStart);
+
+    return (
+        <div
+            className="relative mb-6 flex h-40 flex-col items-center justify-center rounded-2xl text-white shadow-md p-6"
+            style={{ background: "linear-gradient(135deg, #0f766e 0%, #059669 100%)" }}
+        >
+            <div className="text-center">
+                <h2 className="text-xs font-semibold uppercase tracking-widest opacity-75 mb-1">
+                    ✂️ Atendiendo ahora
+                </h2>
+                <strong className="block text-3xl font-bold leading-tight">
+                    {clientName}
+                </strong>
+                <span className="text-sm font-medium opacity-75 mt-1 block">
+                    {serviceName || "Servicio"}
+                </span>
+            </div>
+
+            <div className="absolute bottom-3 left-4">
+                <span className="text-xs font-mono opacity-70">⏱ {elapsed}</span>
+            </div>
+
+            {user?.role === "admin" && (
+                <div className="absolute bottom-3 right-4 flex flex-col items-end gap-1.5">
+                    <button
+                        onClick={() => onFinish(id)}
+                        disabled={loading}
+                        className="rounded-lg px-4 py-1.5 text-sm font-semibold transition cursor-pointer disabled:opacity-50"
+                        style={{ background: "rgba(255,255,255,0.18)", border: "1px solid rgba(255,255,255,0.35)", color: "white" }}
+                    >
+                        {loading ? "Cargando..." : "Finalizar"}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => onNoShow(id)}
+                        disabled={loading}
+                        className="text-xs font-medium underline underline-offset-2 disabled:opacity-50 cursor-pointer"
+                        style={{ color: "rgba(255,255,255,0.7)", background: "none", border: "none" }}
+                    >
+                        {loading ? "Procesando..." : "No llegó / Cancelar"}
+                    </button>
+                </div>
+            )}
+        </div>
+    );
+}
+
+export default memo(CurrentTicket);
 </file>
 
 <file path="src/features/tickets/hooks/useTickets.ts">
@@ -10564,6 +10467,109 @@ export default function Admin() {
             )}
 
         </div >
+    );
+}
+</file>
+
+<file path="src/pages/Register.tsx">
+import { useState } from "react";
+import { registerUser } from "../features/auth/services/authService";
+import { useNavigate, Link } from "react-router-dom";
+
+import { sanitizeName, sanitizeEmail } from "../shared/utils/sanitize";
+
+export default function Register() {
+    const [name, setName] = useState("");
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
+
+    const cleanName = sanitizeName(name);
+    const cleanEmail = sanitizeEmail(email);
+
+    const navigate = useNavigate();
+    const handleRegister = async (e: React.FormEvent) => {
+        e.preventDefault();
+
+        if (!cleanName || !cleanEmail || !password) {
+            setError("Completa todos los campos");
+            return;
+        }
+
+        if (password.length < 6) {
+            setError("La contraseña debe tener al menos 6 caracteres");
+            return;
+        }
+
+        try {
+            setError("");
+            setLoading(true);
+            await registerUser(cleanEmail, password, cleanName);
+            navigate("/");
+        } catch{
+            setError("Error al registrarse");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+            <div className="bg-white p-6 rounded-2xl shadow-lg w-full max-w-sm">
+
+                <h1 className="text-2xl font-bold mb-1 text-center">
+                    Crear cuenta
+                </h1>
+
+                <p className="text-sm text-gray-500 mb-4 text-center">
+                    Regístrate para gestionar tu barbería
+                </p>
+
+                <form onSubmit={handleRegister} className="flex flex-col gap-3">
+
+                    <input
+                        placeholder="Nombre"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        className="border p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                    />
+
+                    <input
+                        placeholder="Correo electrónico"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="border p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                    />
+
+                    <input
+                        type="password"
+                        placeholder="Contraseña"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="border p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                    />
+
+                    {error && (
+                        <p className="text-red-500 text-sm text-center">{error}</p>
+                    )}
+
+                    <button
+                        disabled={loading}
+                        className="bg-indigo-600 text-white p-2 rounded-lg mt-2 hover:bg-indigo-700 transition disabled:opacity-50 cursor-pointer"
+                    >
+                        {loading ? "Creando..." : "Registrarse"}
+                    </button>
+                </form>
+
+                <p className="text-xs text-center mt-4 text-gray-500">
+                    ¿Ya tienes cuenta?{" "}
+                    <Link to="/login" className="text-black font-semibold">
+                        Inicia sesión
+                    </Link>
+                </p>
+            </div>
+        </div>
     );
 }
 </file>
@@ -11001,6 +11007,48 @@ export const markNoShow = async (ticketId: string) => {
 };
 </file>
 
+<file path="package.json">
+{
+  "name": "barberapp",
+  "private": true,
+  "version": "1.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "firebase": "^12.6.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-router-dom": "^7.14.1",
+    "recharts": "^3.8.1",
+    "sweetalert2": "^11.26.24"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@tailwindcss/vite": "^4.1.18",
+    "@types/node": "^24.10.1",
+    "@types/react": "^19.2.5",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.1",
+    "autoprefixer": "^10.4.23",
+    "eslint": "^9.39.1",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.4.24",
+    "globals": "^16.5.0",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.18",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.46.4",
+    "vite": "^7.2.4",
+    "vite-plugin-pwa": "^1.2.0"
+  }
+}
+</file>
+
 <file path="src/features/dashboard/hooks/useDashboard.ts">
 import { useEffect, useState, useMemo } from "react";
 import { getRecentTickets } from "../services/dashboardService";
@@ -11202,6 +11250,7 @@ import { useEffect } from "react";
 
 import { useTickets } from "../features/tickets/hooks/useTickets";
 import { useSettings } from "../features/settings/hooks/useSettings";
+import { useElapsedTime } from "../shared/hooks/useElapsedTime";
 
 export default function PublicQueue() {
 
@@ -11215,9 +11264,11 @@ export default function PublicQueue() {
         if (!current) return;
 
         const audio = new Audio("/notification.mp3");
-        audio.play().catch(() => {});
+        audio.play().catch(() => { });
 
     }, [current?.id]);
+
+    const elapsed = useElapsedTime(current?.time_start);
 
     return (
         <div className="min-h-screen bg-black text-white p-8">
@@ -11231,7 +11282,6 @@ export default function PublicQueue() {
                 </span>
             </div>
 
-            {/* Turno actual */}
             <div className="text-center mb-10">
                 <p className="text-2xl opacity-70">Atendiendo</p>
 
@@ -11242,9 +11292,13 @@ export default function PublicQueue() {
                 <p className="text-2xl opacity-80 mt-2">
                     {current?.serviceName || ""}
                 </p>
+                {current && (
+                    <p className="text-3xl font-mono opacity-60 mt-3">
+                        ⏱ {elapsed}
+                    </p>
+                )}
             </div>
 
-            {/* Siguientes */}
             <div className="mt-10">
                 <p className="text-2xl mb-4 opacity-70">En espera</p>
 
@@ -11409,8 +11463,8 @@ export default function Home() {
                         id={current.id}
                         clientName={current.clientNameFormatted}
                         serviceName={current.serviceName}
+                        timeStart={current.time_start}
                         user={user}
-
                         onFinish={(id) => {
 
                             const ticket = tickets.find(t => t.id === id);
