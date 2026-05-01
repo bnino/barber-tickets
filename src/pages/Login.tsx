@@ -46,7 +46,6 @@ export default function Login() {
         <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
             <div className="bg-white p-6 rounded-2xl shadow-lg w-full max-w-sm">
 
-                {/* Header */}
                 <div className="mb-6 text-center">
                     <h1 className="text-2xl font-bold text-gray-800">
                         Iniciar sesión
@@ -56,14 +55,12 @@ export default function Login() {
                     </p>
                 </div>
 
-                {/* Error */}
                 {error && (
                     <div className="mb-4 text-sm text-red-600 bg-red-50 p-2 rounded">
                         {error}
                     </div>
                 )}
 
-                {/* Inputs */}
                 <input
                     type="email"
                     placeholder="Correo electrónico"
@@ -79,8 +76,15 @@ export default function Login() {
                     onChange={(e) => setPassword(e.target.value)}
                     className="w-full mb-4 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
                 />
+                <div className="text-right mb-4">
+                    <Link
+                        to="/forgot-password"
+                        className="text-xs text-indigo-600 hover:underline"
+                    >
+                        ¿Olvidaste tu contraseña?
+                    </Link>
+                </div>
 
-                {/* Login email */}
                 <button
                     onClick={handleEmailLogin}
                     disabled={loading}
@@ -89,14 +93,12 @@ export default function Login() {
                     {loading ? "Ingresando..." : "Ingresar"}
                 </button>
 
-                {/* Divider */}
                 <div className="my-4 flex items-center gap-2 text-sm text-gray-400">
                     <div className="flex-1 h-px bg-gray-200"></div>
                     <span>o</span>
                     <div className="flex-1 h-px bg-gray-200"></div>
                 </div>
 
-                {/* Google */}
                 <button
                     onClick={handleGoogleLogin}
                     disabled={loading}
@@ -106,7 +108,6 @@ export default function Login() {
                     <span className="font-medium">Continuar con Google</span>
                 </button>
 
-                {/* Register */}
                 <p className="mt-5 text-sm text-center text-gray-500">
                     ¿No tienes cuenta?{" "}
                     <Link to="/register" className="text-black font-semibold hover:underline">

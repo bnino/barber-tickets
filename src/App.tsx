@@ -16,6 +16,7 @@ import ProtectedRoute from "./features/auth/components/ProtectedRoute";
 import PublicRoute from "./features/auth/components/PublicRoute";
 import Navbar from "./shared/components/Navbar";
 import Footer from "./shared/components/Footer";
+import ForgotPassword from './pages/ForgotPassword';
 
 function App() {
 
@@ -35,6 +36,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/tv" element={<PublicQueue />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/login" element={
           <PublicRoute>
             <Login />
