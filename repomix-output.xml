@@ -78,6 +78,8 @@ src/features/dashboard/components/ServicesChart.tsx
 src/features/dashboard/components/StatsCard.tsx
 src/features/dashboard/hooks/useDashboard.ts
 src/features/dashboard/services/dashboardService.ts
+src/features/music/components/MusicPlayer.tsx
+src/features/music/hooks/useYouTube.ts
 src/features/services/components/ServiceList.tsx
 src/features/services/components/ServiceModal.tsx
 src/features/services/hooks/useServices.ts
@@ -98,6 +100,7 @@ src/index.css
 src/main.tsx
 src/pages/Admin.tsx
 src/pages/Dashboard.tsx
+src/pages/ForgotPassword.tsx
 src/pages/Home.tsx
 src/pages/Login.tsx
 src/pages/PublicQueue.tsx
@@ -129,6 +132,260 @@ vite.config.ts
 <files>
 This section contains the contents of the repository's files.
 
+<file path="src/features/music/components/MusicPlayer.tsx">
+import { useEffect, useRef } from "react";
+import { useYouTube } from "../hooks/useYouTube";
+
+declare global {
+    interface Window {
+        YT: any;
+        onYouTubeIframeAPIReady: () => void;
+    }
+}
+
+export default function MusicPlayer() {
+    const {
+        query,
+        setQuery,
+        results,
+        loading,
+        error,
+        search,
+        select,
+        clear,
+        selectedId,
+        selectedType,
+    } = useYouTube();
+
+    const playerRef = useRef<any>(null);
+    const playerContainerRef = useRef<HTMLDivElement>(null);
+    const apiLoadedRef = useRef(false);
+
+    useEffect(() => {
+        if (apiLoadedRef.current) return;
+        apiLoadedRef.current = true;
+
+        const tag = document.createElement("script");
+        tag.src = "https://www.youtube.com/iframe_api";
+        document.head.appendChild(tag);
+    }, []);
+
+    useEffect(() => {
+        if (!selectedId) return;
+
+        const initPlayer = () => {
+            if (playerRef.current) {
+                playerRef.current.destroy();
+            }
+
+            const vars: Record<string, any> = {
+                autoplay: 1,
+                controls: 1,
+                rel: 0,
+                modestbranding: 1,
+            };
+
+            if (selectedType === "playlist") {
+                vars.listType = "playlist";
+                vars.list = selectedId;
+            }
+
+            playerRef.current = new window.YT.Player("yt-player", {
+                height: "100%",
+                width: "100%",
+                videoId: selectedType === "video" ? selectedId : undefined,
+                playerVars: vars,
+                events: {
+                    onReady: (e: any) => e.target.playVideo(),
+                },
+            });
+        };
+
+        if (window.YT && window.YT.Player) {
+            initPlayer();
+        } else {
+            window.onYouTubeIframeAPIReady = initPlayer;
+        }
+    }, [selectedId, selectedType]);
+
+    return (
+        <div className="flex flex-col h-full bg-gray-900 rounded-2xl overflow-hidden">
+
+            <div className="px-4 pt-4 pb-3 border-b border-gray-700">
+                <p className="text-white font-semibold text-sm mb-2">🎵 Música</p>
+
+                <div className="flex gap-2">
+                    <input
+                        type="text"
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && search()}
+                        placeholder="Buscar canción o playlist..."
+                        className="flex-1 bg-gray-800 text-white text-sm px-3 py-2 rounded-lg outline-none placeholder-gray-500 focus:ring-1 focus:ring-indigo-500"
+                    />
+                    <button
+                        onClick={search}
+                        disabled={loading}
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition disabled:opacity-50"
+                    >
+                        {loading ? "..." : "Buscar"}
+                    </button>
+                </div>
+
+                {error && (
+                    <p className="text-red-400 text-xs mt-1">{error}</p>
+                )}
+            </div>
+
+            {results.length > 0 && (
+                <div className="overflow-y-auto max-h-64 border-b border-gray-700">
+                    {results.map((r) => (
+                        <button
+                            key={r.id}
+                            onClick={() => select(r.id, r.type)}
+                            className="w-full flex items-center gap-3 px-4 py-2 hover:bg-gray-800 transition text-left"
+                        >
+                            <img
+                                src={r.thumbnail}
+                                alt={r.title}
+                                className="w-12 h-9 object-cover rounded"
+                            />
+                            <div className="flex-1 min-w-0">
+                                <p className="text-white text-xs font-medium truncate">
+                                    {r.title}
+                                </p>
+                                <p className="text-gray-400 text-xs truncate">
+                                    {r.channelTitle}
+                                    {r.type === "playlist" && (
+                                        <span className="ml-1 text-indigo-400">· Playlist</span>
+                                    )}
+                                </p>
+                            </div>
+                        </button>
+                    ))}
+                </div>
+            )}
+
+            <div className="flex-1 relative" ref={playerContainerRef}>
+                {selectedId ? (
+                    <>
+                        <div id="yt-player" className="absolute inset-0 w-full h-full" />
+                        <button
+                            onClick={clear}
+                            className="absolute top-2 right-2 z-10 bg-black/60 text-white text-xs px-2 py-1 rounded hover:bg-black/80 transition"
+                        >
+                            ✕ Cerrar
+                        </button>
+                    </>
+                ) : (
+                    <div className="flex flex-col items-center justify-center h-full text-gray-500 gap-2">
+                        <span className="text-4xl">🎵</span>
+                        <p className="text-sm">Busca algo para reproducir</p>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+</file>
+
+<file path="src/features/music/hooks/useYouTube.ts">
+import { useState, useCallback } from "react";
+
+type YouTubeVideo = {
+    id: string;
+    title: string;
+    thumbnail: string;
+    channelTitle: string;
+};
+
+type YouTubePlaylist = {
+    id: string;
+    title: string;
+    thumbnail: string;
+    channelTitle: string;
+};
+
+export type YouTubeResult = YouTubeVideo | YouTubePlaylist;
+
+export type SearchResult = {
+    id: string;
+    title: string;
+    thumbnail: string;
+    channelTitle: string;
+    type: "video" | "playlist";
+};
+
+export function useYouTube() {
+    const [query, setQuery] = useState("");
+    const [results, setResults] = useState<SearchResult[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
+    const [selectedId, setSelectedId] = useState<string | null>(null);
+    const [selectedType, setSelectedType] = useState<"video" | "playlist">("video");
+
+    const search = useCallback(async () => {
+        if (!query.trim()) return;
+
+        setLoading(true);
+        setError("");
+
+        try {
+            const apiKey = import.meta.env.VITE_YOUTUBE_API_KEY;
+            const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video,playlist&maxResults=8&key=${apiKey}`;
+
+            const res = await fetch(url);
+            const data = await res.json();
+
+            if (data.error) {
+                setError("Error al buscar. Verifica la API Key.");
+                return;
+            }
+
+            const mapped: SearchResult[] = data.items.map((item: any) => ({
+                id: item.id.videoId || item.id.playlistId,
+                title: item.snippet.title,
+                thumbnail: item.snippet.thumbnails.default.url,
+                channelTitle: item.snippet.channelTitle,
+                type: item.id.kind === "youtube#playlist" ? "playlist" : "video",
+            }));
+
+            setResults(mapped);
+        } catch {
+            setError("Sin conexión o error de red");
+        } finally {
+            setLoading(false);
+        }
+    }, [query]);
+
+    const select = useCallback((id: string, type: "video" | "playlist") => {
+        setSelectedId(id);
+        setSelectedType(type);
+        setResults([]);
+        setQuery("");
+    }, []);
+
+    const clear = useCallback(() => {
+        setSelectedId(null);
+        setResults([]);
+        setQuery("");
+    }, []);
+
+    return {
+        query,
+        setQuery,
+        results,
+        loading,
+        error,
+        search,
+        select,
+        clear,
+        selectedId,
+        selectedType,
+    };
+}
+</file>
+
 <file path=".env.example">
 VITE_FIREBASE_API_KEY=
 VITE_FIREBASE_AUTH_DOMAIN=
@@ -136,20 +393,6 @@ VITE_FIREBASE_PROJECT_ID=
 VITE_FIREBASE_STORAGE_BUCKET=
 VITE_FIREBASE_MESSAGING_SENDER_ID=
 VITE_FIREBASE_APP_ID=
-</file>
-
-<file path=".firebase/hosting.ZGlzdA.cache">
-notification.mp3,1776636930364,d619f5541a29002e7f2e40240e08abc55ef2cecb1a9fcaef13b36d865042d262
-icons/icon-512.png,1777255939886,cc49a446eb31e64aa95021bc00a1c3ded4580456b3cd1b9224d496fb8afef1c5
-icons/icon-192.png,1777255939894,33f74897ec6a56e0dcff73ae55c5c8e146335b63de1e1fe8243daa2455258563
-icons/favicon.ico,1777337867565,ea418e6046866471032f8dd732b5367ee493ad07ba0de963d8debe299bba4097
-manifest.webmanifest,1777421436219,f9829882480d99b1c0549b85225c68d7321b0f224bd6fd495ab45fdc90df02a6
-index.html,1777421436220,cdbcbe934fd9736a6e9b81b3030e80580f23c750a79cf9b8b7c21c85b5e73ff8
-registerSW.js,1777421436220,09e15d1438017c065a3281739cb5506aeaf7b3047bc3ada992da01d4497c2d43
-workbox-3e722498.js,1777421438960,033b40cea9aec81f9aa001ee9d3cd8bc6380101697ca87c7e7eab60c63f65576
-sw.js,1777421438954,92912a6c6cbe790d1d5cc0dcaa7c104633d1b482814b8681b0c388658e3c6b9d
-assets/index-DGv_FSah.css,1777421436217,a553a6a86b9c87ff78a98db2afda44d2b7bbb0d727128a6ac1d5d90abce0169e
-assets/index-W6rCkASC.js,1777421436221,10fcade3a4405265644268cd7269a801f915ca4fd273309016d7b973735ff65c
 </file>
 
 <file path=".firebaserc">
@@ -7744,6 +7987,102 @@ export function useUsers() {
 }
 </file>
 
+<file path="src/pages/ForgotPassword.tsx">
+import { useState } from "react";
+import { sendPasswordResetEmail } from "firebase/auth";
+import { auth } from "../shared/services/firebaseService";
+import { Link } from "react-router-dom";
+
+export default function ForgotPassword() {
+    const [email, setEmail] = useState("");
+    const [sent, setSent] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
+
+    const handleReset = async () => {
+        if (!email) {
+            setError("Ingresa tu correo electrónico");
+            return;
+        }
+
+        try {
+            setLoading(true);
+            setError("");
+            await sendPasswordResetEmail(auth, email);
+            setSent(true);
+        } catch {
+            setError("No encontramos una cuenta con ese correo");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+            <div className="bg-white p-6 rounded-2xl shadow-lg w-full max-w-sm">
+
+                <div className="mb-6 text-center">
+                    <h1 className="text-2xl font-bold text-gray-800">
+                        Recuperar contraseña
+                    </h1>
+                    <p className="text-sm text-gray-500 mt-1">
+                        Te enviaremos un enlace para restablecer tu contraseña
+                    </p>
+                </div>
+
+                {sent ? (
+                    <div className="text-center">
+                        <div className="text-4xl mb-3">📬</div>
+                        <p className="text-sm text-gray-700 font-medium">
+                            Revisa tu correo
+                        </p>
+                        <p className="text-sm text-gray-500 mt-1">
+                            Enviamos un enlace de recuperación a <strong>{email}</strong>
+                        </p>
+                        <Link
+                            to="/login"
+                            className="mt-5 inline-block text-sm text-indigo-600 font-semibold hover:underline"
+                        >
+                            Volver al inicio de sesión
+                        </Link>
+                    </div>
+                ) : (
+                    <>
+                        {error && (
+                            <div className="mb-4 text-sm text-red-600 bg-red-50 p-2 rounded">
+                                {error}
+                            </div>
+                        )}
+
+                        <input
+                            type="email"
+                            placeholder="Correo electrónico"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            className="w-full mb-4 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        />
+
+                        <button
+                            onClick={handleReset}
+                            disabled={loading}
+                            className="w-full bg-indigo-600 text-white py-2 rounded-lg font-semibold hover:bg-indigo-700 transition disabled:opacity-50"
+                        >
+                            {loading ? "Enviando..." : "Enviar enlace"}
+                        </button>
+
+                        <p className="mt-4 text-sm text-center text-gray-500">
+                            <Link to="/login" className="text-black font-semibold hover:underline">
+                                Volver al inicio de sesión
+                            </Link>
+                        </p>
+                    </>
+                )}
+            </div>
+        </div>
+    );
+}
+</file>
+
 <file path="src/shared/hooks/useAlert.ts">
 import Swal, { type SweetAlertIcon } from "sweetalert2";
 
@@ -8044,181 +8383,18 @@ export default {
 }
 </file>
 
-<file path="dev-dist/sw.js">
-/**
- * Copyright 2018 Google Inc. All Rights Reserved.
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *     http://www.apache.org/licenses/LICENSE-2.0
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-// If the loader is already loaded, just stop.
-if (!self.define) {
-  let registry = {};
-
-  // Used for `eval` and `importScripts` where we can't get script URL by other means.
-  // In both cases, it's safe to use a global var because those functions are synchronous.
-  let nextDefineUri;
-
-  const singleRequire = (uri, parentUri) => {
-    uri = new URL(uri + ".js", parentUri).href;
-    return registry[uri] || (
-      
-        new Promise(resolve => {
-          if ("document" in self) {
-            const script = document.createElement("script");
-            script.src = uri;
-            script.onload = resolve;
-            document.head.appendChild(script);
-          } else {
-            nextDefineUri = uri;
-            importScripts(uri);
-            resolve();
-          }
-        })
-      
-      .then(() => {
-        let promise = registry[uri];
-        if (!promise) {
-          throw new Error(`Module ${uri} didn’t register its module`);
-        }
-        return promise;
-      })
-    );
-  };
-
-  self.define = (depsNames, factory) => {
-    const uri = nextDefineUri || ("document" in self ? document.currentScript.src : "") || location.href;
-    if (registry[uri]) {
-      // Module is already loading or loaded.
-      return;
-    }
-    let exports = {};
-    const require = depUri => singleRequire(depUri, uri);
-    const specialDeps = {
-      module: { uri },
-      exports,
-      require
-    };
-    registry[uri] = Promise.all(depsNames.map(
-      depName => specialDeps[depName] || require(depName)
-    )).then(deps => {
-      factory(...deps);
-      return exports;
-    });
-  };
-}
-define(['./workbox-38bb0eb2'], (function (workbox) { 'use strict';
-
-  self.skipWaiting();
-  workbox.clientsClaim();
-
-  /**
-   * The precacheAndRoute() method efficiently caches and responds to
-   * requests for URLs in the manifest.
-   * See https://goo.gl/S9QRab
-   */
-  workbox.precacheAndRoute([{
-    "url": "registerSW.js",
-    "revision": "3ca0b8505b4bec776b69afdba2768812"
-  }, {
-    "url": "/index.html",
-    "revision": "0.hqdcstfl25g"
-  }], {});
-  workbox.cleanupOutdatedCaches();
-  workbox.registerRoute(new workbox.NavigationRoute(workbox.createHandlerBoundToURL("/index.html"), {
-    allowlist: [/^\/$/],
-    denylist: [/^\/api/]
-  }));
-  workbox.registerRoute(/^https:\/\/firestore\.googleapis\.com\/.*/i, new workbox.NetworkOnly(), 'GET');
-  workbox.registerRoute(/^https:\/\/.*\.googleapis\.com\/.*/i, new workbox.NetworkOnly(), 'GET');
-  self.__WB_DISABLE_DEV_LOGS = true;
-
-}));
-</file>
-
-<file path="README.md">
-# 💈 BarberApp
-
-Sistema de gestión de turnos y servicios para barberías, diseñado como una aplicación moderna tipo SaaS.
-
-## 🚀 Características
-
-- 📅 Gestión de turnos en tiempo real
-- ✂️ CRUD de servicios (nombre, precio)
-- 📊 Dashboard con métricas y gráficas
-- 📺 Vista TV para mostrar turnos en espera
-- 🔐 Autenticación con Firebase (Google + Email)
-- 👤 Sistema de roles (admin / user)
-- ⚙️ Configuración del negocio
-- 📢 Sistema de anuncios temporales
-- 💰 Registro de pagos (efectivo / Nequi)
-
----
-
-## 🧠 Tecnologías
-
-- React + TypeScript
-- TailwindCSS
-- Firebase (Auth + Firestore)
-- Recharts
-
----
-
-## 📁 Estructura
-
-src/
-├── features/
-│ ├── auth/
-│ ├── tickets/
-│ ├── dashboard/
-│ ├── services/
-│ ├── settings/
-│ └── announcements/
-│
-├── pages/
-│ ├── Home.tsx
-│ ├── Dashboard.tsx
-│ ├── Admin.tsx
-│ ├── PublicQueue.tsx
-│ ├── Login.tsx
-│ └── Register.tsx
-│
-├── shared/
-│ ├── components/
-│ ├── hooks/
-│ └── utils/
-
-
----
-
-## ⚙️ Configuración
-
-1. Clonar repositorio
-
-```bash
-git clone <https://github.com/bnino/barber-tickets.git>
-cd barber-tickets
-
-2. Instalar dependencias
-
-npm install
-
-3. Configurar Firebase
-
-Crear archivo:
-
-src/shared/services/firebaseService.ts
-
-4. Ejecutar proyecto
-
-npm run dev
+<file path=".firebase/hosting.ZGlzdA.cache">
+notification.mp3,1776636930364,d619f5541a29002e7f2e40240e08abc55ef2cecb1a9fcaef13b36d865042d262
+icons/icon-512.png,1777255939886,cc49a446eb31e64aa95021bc00a1c3ded4580456b3cd1b9224d496fb8afef1c5
+icons/icon-192.png,1777255939894,33f74897ec6a56e0dcff73ae55c5c8e146335b63de1e1fe8243daa2455258563
+icons/favicon.ico,1777337867565,ea418e6046866471032f8dd732b5367ee493ad07ba0de963d8debe299bba4097
+sw.js,1777609290879,fc31b334f89a1b4df488f9bd2341ff60faa56ac2322983fea28fa15c51be2bec
+registerSW.js,1777609287656,09e15d1438017c065a3281739cb5506aeaf7b3047bc3ada992da01d4497c2d43
+manifest.webmanifest,1777609287655,f9829882480d99b1c0549b85225c68d7321b0f224bd6fd495ab45fdc90df02a6
+workbox-3e722498.js,1777609290883,033b40cea9aec81f9aa001ee9d3cd8bc6380101697ca87c7e7eab60c63f65576
+index.html,1777609287656,e9cdf9f37011811dc77178c05dfb92e2e2c4cb1018160873492868a87086b3a6
+assets/index-C1qzdxGz.css,1777609287655,ae1d56b0b0e8bb885ec720c5be48d9d1c121eb94f44e40f1e92625ea71a266d2
+assets/index-CFApgIrN.js,1777609287656,e4bdc878d42991e22756bc703eb7f90eadf0f724e9c9519bb0709b6fabbf372c
 </file>
 
 <file path="src/features/announcements/hooks/useAnnouncements.ts">
@@ -8675,128 +8851,6 @@ export default function UsersTable() {
 }
 </file>
 
-<file path="src/pages/Login.tsx">
-import { useState } from "react";
-import { loginWithGoogle, loginWithEmail } from "../features/auth/services/authService";
-import { useNavigate, Link } from "react-router-dom";
-import googleIcon from "../assets/google.svg";
-
-export default function Login() {
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
-
-    const navigate = useNavigate();
-
-    const handleEmailLogin = async () => {
-        setError("");
-
-        if (!email || !password) {
-            setError("Completa todos los campos");
-            return;
-        }
-
-        try {
-            setLoading(true);
-            await loginWithEmail(email, password);
-            navigate("/");
-        } catch {
-            setError("Correo o contraseña incorrectos");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleGoogleLogin = async () => {
-        try {
-            setLoading(true);
-            await loginWithGoogle();
-            navigate("/");
-        } catch {
-            setError("Error al iniciar con Google");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-            <div className="bg-white p-6 rounded-2xl shadow-lg w-full max-w-sm">
-
-                {/* Header */}
-                <div className="mb-6 text-center">
-                    <h1 className="text-2xl font-bold text-gray-800">
-                        Iniciar sesión
-                    </h1>
-                    <p className="text-sm text-gray-500">
-                        Accede a tu cuenta
-                    </p>
-                </div>
-
-                {/* Error */}
-                {error && (
-                    <div className="mb-4 text-sm text-red-600 bg-red-50 p-2 rounded">
-                        {error}
-                    </div>
-                )}
-
-                {/* Inputs */}
-                <input
-                    type="email"
-                    placeholder="Correo electrónico"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full mb-3 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                />
-
-                <input
-                    type="password"
-                    placeholder="Contraseña"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full mb-4 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                />
-
-                {/* Login email */}
-                <button
-                    onClick={handleEmailLogin}
-                    disabled={loading}
-                    className="w-full bg-indigo-600 text-white py-2 rounded-lg font-semibold transition hover:bg-indigo-700 disabled:opacity-50"
-                >
-                    {loading ? "Ingresando..." : "Ingresar"}
-                </button>
-
-                {/* Divider */}
-                <div className="my-4 flex items-center gap-2 text-sm text-gray-400">
-                    <div className="flex-1 h-px bg-gray-200"></div>
-                    <span>o</span>
-                    <div className="flex-1 h-px bg-gray-200"></div>
-                </div>
-
-                {/* Google */}
-                <button
-                    onClick={handleGoogleLogin}
-                    disabled={loading}
-                    className="w-full flex items-center justify-center gap-2 border py-2 rounded-lg hover:bg-gray-50 transition disabled:opacity-50"
-                >
-                    <img src={googleIcon} alt="Google" className="w-5 h-5" />
-                    <span className="font-medium">Continuar con Google</span>
-                </button>
-
-                {/* Register */}
-                <p className="mt-5 text-sm text-center text-gray-500">
-                    ¿No tienes cuenta?{" "}
-                    <Link to="/register" className="text-black font-semibold hover:underline">
-                        Regístrate
-                    </Link>
-                </p>
-            </div>
-        </div>
-    );
-}
-</file>
-
 <file path="src/shared/components/AnnouncementModal.tsx">
 import { useMemo, useState } from "react";
 import type { Announcement } from "../types";
@@ -8968,6 +9022,371 @@ export const handleError = (error: unknown, message = "Ocurrió un error") => {
         message
     };
 };
+</file>
+
+<file path="dev-dist/sw.js">
+/**
+ * Copyright 2018 Google Inc. All Rights Reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+// If the loader is already loaded, just stop.
+if (!self.define) {
+  let registry = {};
+
+  // Used for `eval` and `importScripts` where we can't get script URL by other means.
+  // In both cases, it's safe to use a global var because those functions are synchronous.
+  let nextDefineUri;
+
+  const singleRequire = (uri, parentUri) => {
+    uri = new URL(uri + ".js", parentUri).href;
+    return registry[uri] || (
+      
+        new Promise(resolve => {
+          if ("document" in self) {
+            const script = document.createElement("script");
+            script.src = uri;
+            script.onload = resolve;
+            document.head.appendChild(script);
+          } else {
+            nextDefineUri = uri;
+            importScripts(uri);
+            resolve();
+          }
+        })
+      
+      .then(() => {
+        let promise = registry[uri];
+        if (!promise) {
+          throw new Error(`Module ${uri} didn’t register its module`);
+        }
+        return promise;
+      })
+    );
+  };
+
+  self.define = (depsNames, factory) => {
+    const uri = nextDefineUri || ("document" in self ? document.currentScript.src : "") || location.href;
+    if (registry[uri]) {
+      // Module is already loading or loaded.
+      return;
+    }
+    let exports = {};
+    const require = depUri => singleRequire(depUri, uri);
+    const specialDeps = {
+      module: { uri },
+      exports,
+      require
+    };
+    registry[uri] = Promise.all(depsNames.map(
+      depName => specialDeps[depName] || require(depName)
+    )).then(deps => {
+      factory(...deps);
+      return exports;
+    });
+  };
+}
+define(['./workbox-38bb0eb2'], (function (workbox) { 'use strict';
+
+  self.skipWaiting();
+  workbox.clientsClaim();
+
+  /**
+   * The precacheAndRoute() method efficiently caches and responds to
+   * requests for URLs in the manifest.
+   * See https://goo.gl/S9QRab
+   */
+  workbox.precacheAndRoute([{
+    "url": "registerSW.js",
+    "revision": "3ca0b8505b4bec776b69afdba2768812"
+  }, {
+    "url": "/index.html",
+    "revision": "0.0osa8ei28rg"
+  }], {});
+  workbox.cleanupOutdatedCaches();
+  workbox.registerRoute(new workbox.NavigationRoute(workbox.createHandlerBoundToURL("/index.html"), {
+    allowlist: [/^\/$/],
+    denylist: [/^\/api/]
+  }));
+  workbox.registerRoute(/^https:\/\/firestore\.googleapis\.com\/.*/i, new workbox.NetworkOnly(), 'GET');
+  workbox.registerRoute(/^https:\/\/.*\.googleapis\.com\/.*/i, new workbox.NetworkOnly(), 'GET');
+  self.__WB_DISABLE_DEV_LOGS = true;
+
+}));
+</file>
+
+<file path="README.md">
+# 💈 BarberApp
+
+> Sistema de gestión de turnos para barberías — PWA con soporte offline completo
+
+[![Version](https://img.shields.io/badge/version-1.1.0-indigo)](https://barberialafama.web.app)
+[![Firebase](https://img.shields.io/badge/Firebase-12.6.0-orange)](https://firebase.google.com)
+[![React](https://img.shields.io/badge/React-19-blue)](https://react.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)](https://www.typescriptlang.org)
+[![PWA](https://img.shields.io/badge/PWA-ready-green)](https://web.dev/progressive-web-apps)
+
+## 🌐 Demo en producción
+
+**[https://barberialafama.web.app](https://barberialafama.web.app)**
+
+---
+
+## ✨ Funcionalidades
+
+### Para clientes
+- 📋 Reserva de turno en tiempo real desde cualquier dispositivo
+- 👤 Pre-llenado automático del nombre si hay sesión iniciada
+- 📊 Visualización de la cola de espera en tiempo real
+
+### Para el barbero / admin
+- ✂️ Gestión completa de turnos — iniciar, finalizar y cancelar
+- ⏱️ Timer en tiempo real del servicio activo
+- 💳 Registro de pago por método (efectivo / Nequi)
+- 🔔 Inicio automático del siguiente turno al finalizar
+
+### Dashboard (admin)
+- 📈 Gráfica de ingresos por día/semana/mes
+- 📊 Servicios más solicitados
+- 💰 Ingresos por tipo de servicio
+- 💳 Distribución de métodos de pago
+
+### Panel de administración
+- 🛠️ Gestión de servicios (CRUD completo)
+- 👥 Gestión de usuarios y roles
+- 📢 Sistema de anuncios con fechas de vigencia
+- ⚙️ Configuración del negocio (nombre, horario, días laborales)
+
+### Vista TV
+- 📺 Pantalla dedicada para el televisor de la barbería
+- 🔄 Detección automática de dispositivo TV por User Agent
+- ⏱️ Timer del turno activo visible para los clientes en espera
+
+### PWA & Offline
+- 📲 Instalable en Android, iOS y escritorio
+- 🌐 Funciona sin conexión a internet
+- 🔄 Sincronización automática al recuperar la conexión
+- 📡 Banner de estado de conexión en tiempo real
+
+---
+
+## 🛠️ Stack tecnológico
+
+| Tecnología | Uso |
+|---|---|
+| React 19 + TypeScript | Frontend |
+| Vite | Bundler y dev server |
+| Tailwind CSS v4 | Estilos |
+| Firebase Auth | Autenticación (Email + Google) |
+| Firestore | Base de datos en tiempo real |
+| Firebase Hosting | Despliegue |
+| Vite PWA Plugin | Service Worker y manifest |
+| Recharts | Gráficas del dashboard |
+| SweetAlert2 | Alertas y confirmaciones |
+
+---
+
+## 📁 Estructura del proyecto
+
+```
+src/
+├── features/
+│   ├── auth/              # Autenticación, contexto y rutas protegidas
+│   ├── tickets/           # Lógica de turnos, hooks y componentes
+│   ├── services/          # Gestión de servicios de la barbería
+│   ├── dashboard/         # Dashboard con gráficas y estadísticas
+│   ├── announcements/     # Sistema de anuncios
+│   ├── settings/          # Configuración del negocio
+│   └── users/             # Gestión de usuarios
+├── pages/                 # Páginas principales (Home, Dashboard, Admin, etc.)
+├── shared/
+│   ├── components/        # Componentes reutilizables (Navbar, Footer, etc.)
+│   ├── hooks/             # Hooks globales (useAlert, useOnlineStatus, etc.)
+│   ├── services/          # Firebase config
+│   ├── types/             # Tipos TypeScript globales
+│   └── utils/             # Utilidades (format, currency, sanitize, etc.)
+└── assets/                # Recursos estáticos
+```
+
+---
+
+## 🚀 Instalación y desarrollo local
+
+### Prerrequisitos
+- Node.js 18+
+- npm 9+
+- Proyecto de Firebase con Firestore y Authentication habilitados
+
+### 1. Clona el repositorio
+
+```bash
+git clone https://github.com/bnino/BarberApp.git
+cd barberapp
+```
+
+### 2. Instala las dependencias
+
+```bash
+npm install
+```
+
+### 3. Configura las variables de entorno
+
+Crea un archivo `.env` en la raíz del proyecto basándote en `.env.example`:
+
+```env
+VITE_FIREBASE_API_KEY=your_api_key
+VITE_FIREBASE_AUTH_DOMAIN=your_auth_domain
+VITE_FIREBASE_PROJECT_ID=your_project_id
+VITE_FIREBASE_STORAGE_BUCKET=your_storage_bucket
+VITE_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
+VITE_FIREBASE_APP_ID=your_app_id
+```
+
+### 4. Inicia el servidor de desarrollo
+
+```bash
+npm run dev
+```
+
+---
+
+## 🔐 Configuración de Firebase
+
+### Firestore — Reglas de seguridad
+
+```javascript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Tickets — lectura pública, escritura autenticada
+    match /tickets/{ticketId} {
+      allow read: if true;
+      allow create: if true;
+      allow update, delete: if request.auth != null;
+    }
+
+    // Servicios — lectura pública, escritura solo admin
+    match /services/{serviceId} {
+      allow read: if true;
+      allow write: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Usuarios — solo el propio usuario o admin
+    match /users/{userId} {
+      allow read, write: if request.auth != null &&
+        (request.auth.uid == userId ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+    }
+
+    // Settings y anuncios — lectura pública, escritura solo admin
+    match /settings/{doc} {
+      allow read: if true;
+      allow write: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    match /announcements/{doc} {
+      allow read: if true;
+      allow write: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+  }
+}
+```
+
+### Authentication — Dominios autorizados
+
+En Firebase Console → Authentication → Settings → Authorized domains, agrega:
+- `localhost`
+- `barberialafama.web.app`
+- Tu dominio personalizado (si aplica)
+
+---
+
+## 📦 Scripts disponibles
+
+```bash
+npm run dev        # Servidor de desarrollo
+npm run build      # Build de producción
+npm run preview    # Preview del build local
+npm run lint       # Linting con ESLint
+```
+
+---
+
+## 🚢 Despliegue en producción
+
+```bash
+# 1. Actualizar versión
+npm version patch   # o minor / major
+
+# 2. Build de producción
+npm run build
+
+# 3. Deploy a Firebase Hosting
+firebase deploy --only hosting:app
+
+# 4. Subir cambios a GitHub
+git push
+git push --tags
+```
+
+---
+
+## 📱 Instalación como PWA
+
+### Android (Chrome)
+1. Abre la app en Chrome
+2. Toca el menú (⋮) → "Instalar app" o "Agregar a pantalla de inicio"
+
+### iOS (Safari)
+1. Abre la app en Safari
+2. Toca el botón de compartir → "Agregar a pantalla de inicio"
+
+### Escritorio (Chrome / Edge)
+1. Haz clic en el ícono de instalación en la barra de direcciones
+2. Confirma la instalación
+
+---
+
+## 👥 Roles de usuario
+
+| Rol | Permisos |
+|---|---|
+| `user` | Reservar turnos, ver cola |
+| `admin` | Todo lo anterior + iniciar/finalizar/cancelar turnos, dashboard, panel admin |
+
+---
+
+## 🤝 Contribuciones
+
+Este es un proyecto personal. Si encuentras un bug o tienes una sugerencia, abre un [issue](https://github.com/bnino/barberapp/issues).
+
+---
+
+## 📄 Licencia
+
+MIT © [Brayan Niño](https://github.com/bnino)
+
+---
+
+<div align="center">
+  <p>Desarrollado con ❤️ por <a href="https://github.com/bnino">Brayan Niño</a></p>
+  <p>
+    <a href="https://barberialafama.web.app">🌐 Ver demo</a>
+  </p>
+</div>
 </file>
 
 <file path="src/features/announcements/components/CreateAnnouncementModal.tsx">
@@ -9483,6 +9902,129 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 );
 </file>
 
+<file path="src/pages/Login.tsx">
+import { useState } from "react";
+import { loginWithGoogle, loginWithEmail } from "../features/auth/services/authService";
+import { useNavigate, Link } from "react-router-dom";
+import googleIcon from "../assets/google.svg";
+
+export default function Login() {
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
+
+    const navigate = useNavigate();
+
+    const handleEmailLogin = async () => {
+        setError("");
+
+        if (!email || !password) {
+            setError("Completa todos los campos");
+            return;
+        }
+
+        try {
+            setLoading(true);
+            await loginWithEmail(email, password);
+            navigate("/");
+        } catch {
+            setError("Correo o contraseña incorrectos");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleGoogleLogin = async () => {
+        try {
+            setLoading(true);
+            await loginWithGoogle();
+            navigate("/");
+        } catch {
+            setError("Error al iniciar con Google");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+            <div className="bg-white p-6 rounded-2xl shadow-lg w-full max-w-sm">
+
+                <div className="mb-6 text-center">
+                    <h1 className="text-2xl font-bold text-gray-800">
+                        Iniciar sesión
+                    </h1>
+                    <p className="text-sm text-gray-500">
+                        Accede a tu cuenta
+                    </p>
+                </div>
+
+                {error && (
+                    <div className="mb-4 text-sm text-red-600 bg-red-50 p-2 rounded">
+                        {error}
+                    </div>
+                )}
+
+                <input
+                    type="email"
+                    placeholder="Correo electrónico"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full mb-3 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                />
+
+                <input
+                    type="password"
+                    placeholder="Contraseña"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full mb-4 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                />
+                <div className="text-right mb-4">
+                    <Link
+                        to="/forgot-password"
+                        className="text-xs text-indigo-600 hover:underline"
+                    >
+                        ¿Olvidaste tu contraseña?
+                    </Link>
+                </div>
+
+                <button
+                    onClick={handleEmailLogin}
+                    disabled={loading}
+                    className="w-full bg-indigo-600 text-white py-2 rounded-lg font-semibold transition hover:bg-indigo-700 disabled:opacity-50"
+                >
+                    {loading ? "Ingresando..." : "Ingresar"}
+                </button>
+
+                <div className="my-4 flex items-center gap-2 text-sm text-gray-400">
+                    <div className="flex-1 h-px bg-gray-200"></div>
+                    <span>o</span>
+                    <div className="flex-1 h-px bg-gray-200"></div>
+                </div>
+
+                <button
+                    onClick={handleGoogleLogin}
+                    disabled={loading}
+                    className="w-full flex items-center justify-center gap-2 border py-2 rounded-lg hover:bg-gray-50 transition disabled:opacity-50"
+                >
+                    <img src={googleIcon} alt="Google" className="w-5 h-5" />
+                    <span className="font-medium">Continuar con Google</span>
+                </button>
+
+                <p className="mt-5 text-sm text-center text-gray-500">
+                    ¿No tienes cuenta?{" "}
+                    <Link to="/register" className="text-black font-semibold hover:underline">
+                        Regístrate
+                    </Link>
+                </p>
+            </div>
+        </div>
+    );
+}
+</file>
+
 <file path="src/shared/services/firebaseService.ts">
 import { initializeApp } from "firebase/app";
 import {
@@ -9511,74 +10053,6 @@ export const db = initializeFirestore(app, {
 
 export const auth = getAuth(app);
 export default app;
-</file>
-
-<file path="vite.config.ts">
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
-import tailwindcss from "@tailwindcss/vite";
-import { VitePWA } from "vite-plugin-pwa";
-
-export default defineConfig({
-  define: {
-    __APP_VERSION__: JSON.stringify(process.env.npm_package_version),
-  },
-  plugins: [
-    react(),
-    tailwindcss(),
-    VitePWA({
-      registerType: "autoUpdate",
-      devOptions: {
-        enabled: true,
-      },
-      workbox: {
-        globPatterns: ["**/*.{js,css,html,ico,png,svg,mp3}"],
-        navigateFallback: "/index.html",
-        disableDevLogs: true,
-        navigateFallbackDenylist: [/^\/api/],
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/firestore\.googleapis\.com\/.*/i,
-            handler: "NetworkOnly",
-          },
-          {
-            urlPattern: /^https:\/\/.*\.googleapis\.com\/.*/i,
-            handler: "NetworkOnly",
-          },
-        ],
-      },
-      manifest: {
-        name: "BarberApp",
-        short_name: "BarberApp",
-        description: "Sistema de gestión de turnos para barberías",
-        theme_color: "#0f766e",
-        background_color: "#f9fafb",
-        display: "standalone",
-        orientation: "portrait",
-        scope: "/",
-        start_url: "/",
-        icons: [
-          {
-            src: "/icons/icon-192.png",
-            sizes: "192x192",
-            type: "image/png",
-          },
-          {
-            src: "/icons/icon-512.png",
-            sizes: "512x512",
-            type: "image/png",
-          },
-          {
-            src: "/icons/icon-512.png",
-            sizes: "512x512",
-            type: "image/png",
-            purpose: "maskable",
-          },
-        ],
-      },
-    }),
-  ],
-});
 </file>
 
 <file path="index.html">
@@ -9953,6 +10427,74 @@ export type Announcement = {
   active?: boolean;
   createdAt?: Timestamp;
 };
+</file>
+
+<file path="vite.config.ts">
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
+import { VitePWA } from "vite-plugin-pwa";
+
+export default defineConfig({
+  define: {
+    __APP_VERSION__: JSON.stringify(process.env.npm_package_version),
+  },
+  plugins: [
+    react(),
+    tailwindcss(),
+    VitePWA({
+      registerType: "autoUpdate",
+      devOptions: {
+        enabled: true,
+      },
+      workbox: {
+        globPatterns: ["**/*.{js,css,html,ico,png,svg,mp3}"],
+        navigateFallback: "/index.html",
+        disableDevLogs: true,
+        navigateFallbackDenylist: [/^\/api/],
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/firestore\.googleapis\.com\/.*/i,
+            handler: "NetworkOnly",
+          },
+          {
+            urlPattern: /^https:\/\/.*\.googleapis\.com\/.*/i,
+            handler: "NetworkOnly",
+          },
+        ],
+      },
+      manifest: {
+        name: "BarberApp",
+        short_name: "BarberApp",
+        description: "Sistema de gestión de turnos para barberías",
+        theme_color: "#0f766e",
+        background_color: "#f9fafb",
+        display: "standalone",
+        orientation: "portrait",
+        scope: "/",
+        start_url: "/",
+        icons: [
+          {
+            src: "/icons/icon-192.png",
+            sizes: "192x192",
+            type: "image/png",
+          },
+          {
+            src: "/icons/icon-512.png",
+            sizes: "512x512",
+            type: "image/png",
+          },
+          {
+            src: "/icons/icon-512.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "maskable",
+          },
+        ],
+      },
+    }),
+  ],
+});
 </file>
 
 <file path="src/features/dashboard/components/IncomeChart.tsx">
@@ -11007,48 +11549,6 @@ export const markNoShow = async (ticketId: string) => {
 };
 </file>
 
-<file path="package.json">
-{
-  "name": "barberapp",
-  "private": true,
-  "version": "1.1.0",
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
-    "lint": "eslint .",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "firebase": "^12.6.0",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
-    "react-router-dom": "^7.14.1",
-    "recharts": "^3.8.1",
-    "sweetalert2": "^11.26.24"
-  },
-  "devDependencies": {
-    "@eslint/js": "^9.39.1",
-    "@tailwindcss/vite": "^4.1.18",
-    "@types/node": "^24.10.1",
-    "@types/react": "^19.2.5",
-    "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^5.1.1",
-    "autoprefixer": "^10.4.23",
-    "eslint": "^9.39.1",
-    "eslint-plugin-react-hooks": "^7.0.1",
-    "eslint-plugin-react-refresh": "^0.4.24",
-    "globals": "^16.5.0",
-    "postcss": "^8.5.6",
-    "tailwindcss": "^4.1.18",
-    "typescript": "~5.9.3",
-    "typescript-eslint": "^8.46.4",
-    "vite": "^7.2.4",
-    "vite-plugin-pwa": "^1.2.0"
-  }
-}
-</file>
-
 <file path="src/features/dashboard/hooks/useDashboard.ts">
 import { useEffect, useState, useMemo } from "react";
 import { getRecentTickets } from "../services/dashboardService";
@@ -11245,99 +11745,141 @@ export function useDashboard() {
 }
 </file>
 
+<file path="package.json">
+{
+  "name": "barberapp",
+  "private": true,
+  "version": "1.2.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "firebase": "^12.6.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-router-dom": "^7.14.1",
+    "recharts": "^3.8.1",
+    "sweetalert2": "^11.26.24"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@tailwindcss/vite": "^4.1.18",
+    "@types/node": "^24.10.1",
+    "@types/react": "^19.2.5",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.1",
+    "autoprefixer": "^10.4.23",
+    "eslint": "^9.39.1",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.4.24",
+    "globals": "^16.5.0",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.18",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.46.4",
+    "vite": "^7.2.4",
+    "vite-plugin-pwa": "^1.2.0"
+  }
+}
+</file>
+
 <file path="src/pages/PublicQueue.tsx">
 import { useEffect } from "react";
-
 import { useTickets } from "../features/tickets/hooks/useTickets";
 import { useSettings } from "../features/settings/hooks/useSettings";
 import { useElapsedTime } from "../shared/hooks/useElapsedTime";
+import MusicPlayer from "../features/music/components/MusicPlayer";
 
 export default function PublicQueue() {
-
     const { tickets, current } = useTickets();
     const { companyName, isOpen } = useSettings();
-
     const waiting = tickets.filter(t => t.status === "waiting");
-
-    useEffect(() => {
-
-        if (!current) return;
-
-        const audio = new Audio("/notification.mp3");
-        audio.play().catch(() => { });
-
-    }, [current?.id]);
-
     const elapsed = useElapsedTime(current?.time_start);
 
+    useEffect(() => {
+        if (!current) return;
+        const audio = new Audio("/notification.mp3");
+        audio.play().catch(() => {});
+    }, [current?.id]);
+
     return (
-        <div className="min-h-screen bg-black text-white p-8">
+        <div className="h-screen w-screen bg-black text-white flex overflow-hidden">
 
-            {/* Header */}
-            <div className="flex justify-between items-center mb-10">
-                <h1 className="text-4xl font-bold">💈 {companyName}</h1>
+            {/* IZQUIERDA — Turnos */}
+            <div className="flex flex-col w-1/2 h-full p-8 border-r border-white/10 overflow-y-auto">
 
-                <span className={`text-xl font-semibold ${isOpen ? "text-green-400" : "text-red-400"}`}>
-                    {isOpen ? "🟢 Abierto" : "🔴 Cerrado"}
-                </span>
-            </div>
+                {/* Header */}
+                <div className="flex justify-between items-center mb-10">
+                    <h1 className="text-4xl font-bold">💈 {companyName}</h1>
+                    <span className={`text-xl font-semibold ${isOpen ? "text-green-400" : "text-red-400"}`}>
+                        {isOpen ? "🟢 Abierto" : "🔴 Cerrado"}
+                    </span>
+                </div>
 
-            <div className="text-center mb-10">
-                <p className="text-2xl opacity-70">Atendiendo</p>
-
-                <h2 className="text-6xl font-bold mt-2 text-indigo-300">
-                    {current?.clientNameFormatted || "---"}
-                </h2>
-
-                <p className="text-2xl opacity-80 mt-2">
-                    {current?.serviceName || ""}
-                </p>
-                {current && (
-                    <p className="text-3xl font-mono opacity-60 mt-3">
-                        ⏱ {elapsed}
+                {/* Turno activo */}
+                <div className="text-center mb-10">
+                    <p className="text-2xl opacity-70">Atendiendo</p>
+                    <h2 className="text-6xl font-bold mt-2 text-indigo-300">
+                        {current?.clientNameFormatted || "---"}
+                    </h2>
+                    <p className="text-2xl opacity-80 mt-2">
+                        {current?.serviceName || ""}
                     </p>
-                )}
-            </div>
-
-            <div className="mt-10">
-                <p className="text-2xl mb-4 opacity-70">En espera</p>
-
-                <div className="grid grid-cols-3 gap-6">
-                    {waiting.length === 0 ? (
-                        <p className="text-center text-gray-500 col-span-3">
-                            No hay turnos en espera
+                    {current && (
+                        <p className="text-3xl font-mono opacity-60 mt-3">
+                            ⏱ {elapsed}
                         </p>
-                    ) : (
-                        waiting.map((t, index) => {
-                            const isNext = index === 0;
-                            return (
-                                <div
-                                    key={t.id}
-                                    className={`
-                                            rounded-xl p-4 text-center transition-all duration-300
-                                            ${isNext
-                                            ? "bg-yellow-400/20 border-2 border-yellow-400 scale-105 animate-pulse"
-                                            : "bg-white/10"
-                                        }
-            `}
-                                >
-                                    <p className="text-sm opacity-70">
-                                        Turno #{index + 1}
-                                    </p>
-
-                                    <p className="text-2xl font-semibold">
-                                        {t.clientNameFormatted}
-                                    </p>
-
-                                    <p className="text-sm opacity-70">
-                                        {t.serviceName}
-                                    </p>
-                                </div>
-                            )
-                        })
                     )}
                 </div>
+
+                {/* Cola de espera */}
+                <div className="mt-10">
+                    <p className="text-2xl mb-4 opacity-70">En espera</p>
+                    <div className="grid grid-cols-2 gap-6">
+                        {waiting.length === 0 ? (
+                            <p className="text-center text-gray-500 col-span-2">
+                                No hay turnos en espera
+                            </p>
+                        ) : (
+                            waiting.map((t, index) => {
+                                const isNext = index === 0;
+                                return (
+                                    <div
+                                        key={t.id}
+                                        className={`
+                                            rounded-xl p-4 text-center transition-all duration-300
+                                            ${isNext
+                                                ? "bg-yellow-400/20 border-2 border-yellow-400 scale-105 animate-pulse"
+                                                : "bg-white/10"
+                                            }
+                                        `}
+                                    >
+                                        <p className="text-sm opacity-70">
+                                            Turno #{index + 1}
+                                        </p>
+                                        <p className="text-2xl font-semibold">
+                                            {t.clientNameFormatted}
+                                        </p>
+                                        <p className="text-sm opacity-70">
+                                            {t.serviceName}
+                                        </p>
+                                    </div>
+                                );
+                            })
+                        )}
+                    </div>
+                </div>
             </div>
+
+            {/* DERECHA — Música */}
+            <div className="w-1/2 h-full p-8">
+                <MusicPlayer />
+            </div>
+
         </div>
     );
 }
@@ -11362,6 +11904,7 @@ import ProtectedRoute from "./features/auth/components/ProtectedRoute";
 import PublicRoute from "./features/auth/components/PublicRoute";
 import Navbar from "./shared/components/Navbar";
 import Footer from "./shared/components/Footer";
+import ForgotPassword from './pages/ForgotPassword';
 
 function App() {
 
@@ -11381,6 +11924,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/tv" element={<PublicQueue />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/login" element={
           <PublicRoute>
             <Login />
@@ -11523,7 +12067,15 @@ export default function Home() {
                 </div>
                 <div className="mt-7.5 p-5 rounded-xl bg-gray-50 border border-gray-200 text-center">
 
-                    <button disabled={!isOpen} className="px-6 py-3.5 text-base font-semibold rounded-lg border-none cursor-pointer bg-indigo-600 text-white transition-transform duration-150 ease-in-out hover:bg-indigo-700 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed" onClick={() => setShowForm(prev => !prev)}>
+                    <button
+                        disabled={!isOpen}
+                        className="px-6 py-3.5 text-base font-semibold rounded-lg border-none cursor-pointer bg-indigo-600 text-white transition-transform duration-150 ease-in-out hover:bg-indigo-700 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                        onClick={() => {
+                            if (!showForm && user?.displayName && user.role === "user") {
+                                setClientName(user.displayName);
+                            }
+                            setShowForm(prev => !prev)
+                        }}>
                         {isOpen ? "Reservar turno" : "Negocio cerrado"}
                     </button>
 
@@ -11541,7 +12093,7 @@ export default function Home() {
                                     alert.warning("Ingresa un nombre válido");
                                     return;
                                 }
-                                
+
                                 const res = await handleReserve(cleanName, serviceId);
                                 if (res.ok) {
                                     setClientName("");
