@@ -13,7 +13,14 @@ import { formatCOP } from "../shared/utils/currency";
 export default function Dashboard() {
     const { stats, loading, filter, setFilter, incomeChart, servicesChart, incomeByService, paymentStats } = useDashboard();
 
-    if (loading) return <p className="p-6">Cargando...</p>;
+    if (loading) return (
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+            <div className="flex flex-col items-center gap-3 text-gray-400">
+                <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                <p className="text-sm">Cargando dashboard...</p>
+            </div>
+        </div>
+    );
 
     return (
         <div className="min-h-screen bg-gray-50 p-6">

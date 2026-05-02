@@ -28,9 +28,7 @@ export default function AnnouncementModal({ announcement }: { announcement: Anno
   return (
     <div
       className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
-      onClick={() => {
-        handleClose();
-      }}
+      onClick={handleClose}
     >
       <div
         className="bg-white rounded-xl p-6 w-96 shadow-lg text-center"
@@ -45,9 +43,7 @@ export default function AnnouncementModal({ announcement }: { announcement: Anno
         </p>
 
         <button
-          onClick={() => {
-            handleClose();
-          }}
+          onClick={handleClose}
           className="px-4 py-2 bg-black text-white rounded"
         >
           Entendido

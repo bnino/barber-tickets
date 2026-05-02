@@ -47,7 +47,8 @@ export default function ForgotPassword() {
                             Revisa tu correo
                         </p>
                         <p className="text-sm text-gray-500 mt-1">
-                            Enviamos un enlace de recuperación a <strong>{email}</strong>
+                            Si ese correo está registrado, recibirás un enlace en los próximos minutos.
+                            Revisa también tu carpeta de spam.
                         </p>
                         <Link
                             to="/login"
