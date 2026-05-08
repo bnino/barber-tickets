@@ -5,6 +5,8 @@ import App from './App'
 import { AuthProvider } from './features/auth/context/AuthContext'
 import { BrowserRouter } from 'react-router-dom'
 
+import 'animate.css';
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <BrowserRouter>

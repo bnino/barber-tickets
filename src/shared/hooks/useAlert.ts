@@ -13,7 +13,13 @@ export function useAlert() {
             title: options.title,
             text: options.text,
             timer: options.timer,
-            showConfirmButton: !options.timer
+            showConfirmButton: !options.timer,
+            showClass: {
+                popup: "animate__animated animate__fadeInDown animate__faster"
+            },
+            hideClass: {
+                popup: "animate__animated animate__fadeOutUp animate__faster"
+            }
         });
     };
 

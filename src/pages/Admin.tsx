@@ -39,55 +39,64 @@ export default function Admin() {
         <div className="min-h-screen bg-gray-50 p-6">
             <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-xl p-8 space-y-6">
 
-                <h1 className="text-xl font-bold mb-6">
-                    ⚙️ Configuración del negocio
-                </h1>
-
-                <button
-                    onClick={async () => {
-
-                        setShowAnnouncementModal(true);
-                    }}
-                    className="px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold transition hover:bg-indigo-700 cursor-pointer"
-                >
-                    Crear anuncio
-                </button>
+                <div className="flex items-center justify-between">
+                    <h1 className="text-xl font-bold">
+                        ⚙️ Configuración del negocio
+                    </h1>
+                    <button
+                        onClick={() => setShowAnnouncementModal(true)}
+                        title="Crear anuncio"
+                        className="w-9 h-9 rounded-lg bg-indigo-50 hover:bg-indigo-100 flex items-center justify-center transition cursor-pointer"
+                    >
+                        <span className="text-indigo-600 text-lg">📢</span>
+                    </button>
+                </div>
 
                 <div className="bg-gray-50 p-4 rounded-xl border">
                     <label className="text-sm font-semibold">Nombre del negocio</label>
                     <input
                         value={companyName}
                         onChange={(e) => setCompanyName(e.target.value)}
-                        className="w-full mt-2 p-2 border rounded-lg focus:ring-2 focus:ring-black"
+                        className="w-full mt-2 p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                     />
+                    <div className="flex items-center justify-between py-3 bg-gray-50 rounded-xl">
+                        <div>
+                            <p className="text-sm font-semibold text-gray-800">Estado del negocio</p>
+                            <p className={`text-xs mt-0.5 ${isOpen ? "text-emerald-600" : "text-red-600"}`}>{isOpen
+                                ? "Abierto — los clientes pueden reservar"
+                                : "Cerrado — no se aceptan nuevos turnos"}
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => setIsOpen(!isOpen)}
+                            className={`relative w-11 h-6 rounded-full transition-colors duration-200 cursor-pointer border-none shrink-0
+                            ${isOpen ? "bg-emerald-500" : "bg-gray-300"}`}
+                        >
+                            <span
+                                className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-200
+                                ${isOpen ? "left-6" : "left-1"}`}
+                            />
+                        </button>
+                    </div>
                 </div>
 
-                <div className="mb-4 flex items-center justify-between">
-                    <span className="text-sm font-semibold">Estado del negocio</span>
-                    <button
-                        onClick={() => setIsOpen(!isOpen)}
-                        className={`px-4 py-2 rounded-lg text-white font-semibold transition ${isOpen ? "bg-emerald-600 hover:bg-emerald-700" : "bg-red-600 hover:bg-red-700"
-                            }`}
-                    >
-                        {isOpen ? "Abierto" : "Cerrado"}
-                    </button>
-                </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    <p className="text-sm font-semibold mb-2">
+                <div className="flex flex-col gap-3">
+                    <p className="text-sm font-semibold">
                         Días laborales
                     </p>
 
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-2 gap-y-3 gap-x-6">
                         {DAYS.map(day => (
                             <label
                                 key={day}
-                                className="flex items-center gap-2 cursor-pointer"
+                                className="flex items-center gap-2 cursor-pointer text-sm capitalize"
                             >
                                 <input
                                     type="checkbox"
                                     checked={workingDays.includes(day)}
                                     onChange={() => toggleDay(day)}
+                                    className="accent-indigo-600 w-4 h-4"
                                 />
                                 {day}
                             </label>
@@ -100,7 +109,7 @@ export default function Admin() {
                         await save();
                         alert.success("Configuración guardada");
                     }}
-                    className="w-full bg-black text-white py-2 rounded"
+                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg font-semibold transition cursor-pointer"
                 >
                     Guardar cambios
                 </button>
